@@ -760,6 +760,49 @@ class RecipesApp {
 
         // Hacer disponible la instancia de la app globalmente
         window.app = this;
+        
+        // Inicializar cuando el DOM esté listo
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => this.initializeApp());
+        } else {
+            this.initializeApp();
+        }
+    }
+
+    // Inicializar la aplicación
+    initializeApp() {
+        console.log('🚀 Inicializando RecetasWorld...');
+        
+        // Verificar que todos los elementos críticos estén presentes
+        const criticalElements = [
+            'recipesGrid',
+            'searchInput', 
+            'hamburger',
+            'loginBtn'
+        ];
+        
+        const missingElements = criticalElements.filter(id => !document.getElementById(id));
+        if (missingElements.length > 0) {
+            console.error('❌ Elementos críticos faltantes:', missingElements);
+            return;
+        }
+        
+        // Inicializar componentes
+        this.initializeEventListeners();
+        this.showHome();
+        
+        console.log('✅ RecetasWorld inicializado correctamente');
+    }
+
+    // Inicializar event listeners principales
+    initializeEventListeners() {
+        // Event listeners ya existentes se mantienen en el constructor
+        // Esta función es para inicialización adicional si es necesaria
+        
+        // Optimizar imágenes existentes al cargar
+        setTimeout(() => {
+            this.optimizeExistingImages();
+        }, 1000);
     }
     
     // Detectar formato de imagen
