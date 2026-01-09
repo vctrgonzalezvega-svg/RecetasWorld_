@@ -2142,6 +2142,7 @@ class RecipesApp {
         
         fetch('data/recipes.json')
             .then(response => {
+                console.log('📡 Response status:', response.status);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
@@ -2153,6 +2154,7 @@ class RecipesApp {
                 if (data && Array.isArray(data.recetas)) {
                     this.recipes = data.recetas;
                     console.log(`✅ ${this.recipes.length} recetas cargadas exitosamente`);
+                    console.log('🔍 Primeras 3 recetas:', this.recipes.slice(0, 3).map(r => r.nombre));
                     
                     // Asegurar que todas las recetas tengan IDs válidos
                     this.ensureAllRecipesHaveValidIds();
@@ -2161,6 +2163,7 @@ class RecipesApp {
                     this.applyRatingStatsToRecipes();
                     this.applyRecipeOverrides();
                     
+                    console.log('🚀 Llamando initializeApp...');
                     // Inicializar la aplicación
                     this.initializeApp();
                 } else {
@@ -2776,6 +2779,123 @@ class RecipesApp {
             this.showWeeklyPlanner();
             this.closeMenu();
         });
+
+        // ========== EVENT LISTENERS PARA FUNCIONALIDADES PRINCIPALES ==========
+        
+        // Login / Admin handlers
+        const loginBtn = document.getElementById('loginBtn');
+        if (loginBtn) loginBtn.addEventListener('click', () => this.showLoginModal());
+        
+        const adminPanelBtn = document.getElementById('adminPanelBtn');
+        if (adminPanelBtn) adminPanelBtn.addEventListener('click', () => this.showAdminPanel());
+        
+        const userConfigBtn = document.getElementById('userConfigBtn');
+        if (userConfigBtn) userConfigBtn.addEventListener('click', () => this.showUserProfilePanel());
+        
+        // Nuevas funcionalidades avanzadas
+        const achievementsBtn = document.getElementById('achievementsBtn');
+        if (achievementsBtn) achievementsBtn.addEventListener('click', () => this.showAchievementsModal());
+        
+        const advancedFiltersBtn = document.getElementById('advancedFiltersBtn');
+        if (advancedFiltersBtn) advancedFiltersBtn.addEventListener('click', () => this.showAdvancedFilters());
+        
+        // Toggle admin key input when role changes
+        const roleRadios = document.querySelectorAll('input[name="loginRole"]');
+        const adminKeyWrapper = document.getElementById('adminKeyWrapper');
+        if (roleRadios && adminKeyWrapper) {
+            roleRadios.forEach(r => r.addEventListener('change', (e) => {
+                if (e.target.value === 'admin') adminKeyWrapper.style.display = 'block';
+                else adminKeyWrapper.style.display = 'none';
+            }));
+        }
+        
+        // Cerrar modales
+        const closeLoginModal = document.getElementById('closeLoginModal');
+        const loginModalEl = document.getElementById('loginModal');
+        if (closeLoginModal && loginModalEl) closeLoginModal.addEventListener('click', () => {
+            loginModalEl.classList.remove('active');
+            this.showHeaderAndSearch();
+        });
+        
+        const loginForm = document.getElementById('loginForm');
+        if (loginForm) loginForm.addEventListener('submit', (e) => { e.preventDefault(); this.login(); });
+        
+        const registerBtn = document.getElementById('registerBtn');
+        if (registerBtn) registerBtn.addEventListener('click', () => this.register());
+
+        const closeAdminPanel = document.getElementById('closeAdminPanel');
+        if (closeAdminPanel) {
+            closeAdminPanel.addEventListener('click', () => this.closeAdminPanel());
+        }
+        
+        // Admin form handlers
+        const submitAddRecipe = document.getElementById('submitAddRecipe');
+        if (submitAddRecipe) submitAddRecipe.addEventListener('click', () => this.adminAddRecipe());
+        
+        const submitAddProduct = document.getElementById('submitAddProduct');
+        if (submitAddProduct) submitAddProduct.addEventListener('click', () => this.adminAddProduct());
+        
+        // Navigation links
+        const productsLink = document.getElementById('products-link');
+        if (productsLink) productsLink.addEventListener('click', (e) => { 
+            e.preventDefault(); 
+            this.showProducts(); 
+            this.closeMenu(); 
+        });
+
+        const recommendationsLink = document.getElementById('recommendations-link');
+        if (recommendationsLink) recommendationsLink.addEventListener('click', (e) => { 
+            e.preventDefault(); 
+            this.showRecommendations(); 
+            this.closeMenu(); 
+        });
+        
+        // Tab buttons
+        document.querySelectorAll('.admin-tab-btn').forEach(btn => btn.addEventListener('click', (e) => {
+            const tab = e.currentTarget.getAttribute('data-tab');
+            this.switchAdminTab(tab);
+        }));
+
+        // Cerrar modales al hacer click fuera
+        document.addEventListener('click', (e) => {
+            const recipeModalEl = document.getElementById('recipeModal');
+            if (recipeModalEl && e.target.id === 'recipeModal') {
+                recipeModalEl.classList.remove('active');
+                this.showHeaderAndSearch();
+            }
+            const adminPanelEl = document.getElementById('adminPanel');
+            if (adminPanelEl && e.target.id === 'adminPanel') {
+                adminPanelEl.classList.remove('active');
+                this.showHeaderAndSearch();
+            }
+            const loginModalEl = document.getElementById('loginModal');
+            if (loginModalEl && e.target.id === 'loginModal') {
+                loginModalEl.classList.remove('active');
+                this.showHeaderAndSearch();
+            }
+            const plannerModalEl = document.getElementById('plannerModal');
+            if (plannerModalEl && e.target.id === 'plannerModal') {
+                plannerModalEl.classList.remove('active');
+                this.showHeaderAndSearch();
+            }
+            const favoritesModalEl = document.getElementById('favoritesModal');
+            if (favoritesModalEl && e.target.id === 'favoritesModal') {
+                favoritesModalEl.classList.remove('active');
+                this.showHeaderAndSearch();
+            }
+        });
+
+        // Cerrar con Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                this.closeMenu();
+                ['recipeModal','plannerModal','favoritesModal','loginModal','adminPanel'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.classList.remove('active');
+                });
+                this.showHeaderAndSearch();
+            }
+        });
     }
 
     // DUPLICATE FUNCTION REMOVED - FUNCTIONALITY MERGED INTO FIRST setupEventListeners
@@ -3368,6 +3488,13 @@ class RecipesApp {
     }
 
     showHome() {
+        console.log('🏠 showHome() llamado');
+        console.log('📊 Estado de recetas:', {
+            recipes: this.recipes,
+            length: this.recipes ? this.recipes.length : 'undefined',
+            isArray: Array.isArray(this.recipes)
+        });
+        
         this.currentCategory = null;
         this.lastSearchQuery = '';
         
@@ -3387,9 +3514,13 @@ class RecipesApp {
         }
         
         // Mostrar TODAS las recetas ordenadas por preferencias del usuario
+        console.log('🎯 Obteniendo recetas personalizadas...');
         const allRecipesPersonalized = this.getAllRecipesPersonalized();
+        console.log('📋 Recetas personalizadas obtenidas:', allRecipesPersonalized.length);
         
         document.getElementById('sectionTitle').textContent = 'Todas las Recetas - Personalizadas para Ti';
+        
+        console.log('🖼️ Llamando displayRecipes...');
         this.displayRecipes(allRecipesPersonalized);
         
         console.log(`🏠 Mostrando ${allRecipesPersonalized.length} recetas personalizadas`);
@@ -3822,6 +3953,8 @@ class RecipesApp {
     }
 
     displayRecipes(recipes) {
+        console.log('🖼️ displayRecipes() llamado con:', recipes ? recipes.length : 'undefined', 'recetas');
+        
         const grid = document.getElementById('recipesGrid');
         
         if (!grid) {
@@ -3829,7 +3962,10 @@ class RecipesApp {
             return;
         }
         
+        console.log('✅ Grid element encontrado:', grid);
+        
         if (!recipes || recipes.length === 0) {
+            console.log('⚠️ No hay recetas para mostrar');
             grid.innerHTML = `
                 <div class="no-recipes" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
                     <i class="fas fa-search" style="font-size: 48px; color: #6c757d; margin-bottom: 15px;"></i>
@@ -3839,6 +3975,8 @@ class RecipesApp {
             return;
         }
 
+        console.log('🔄 Procesando', recipes.length, 'recetas...');
+        
         // Limpiar grid inmediatamente para mejor UX
         grid.innerHTML = '<div class="loading-recipes">Cargando recetas...</div>';
 
@@ -3853,6 +3991,8 @@ class RecipesApp {
             const start = currentBatch * batchSize;
             const end = Math.min(start + batchSize, recipes.length);
             
+            console.log(`📦 Procesando lote ${currentBatch + 1}: recetas ${start + 1}-${end}`);
+            
             // Crear contenedor temporal para el lote
             const tempContainer = document.createElement('div');
             
@@ -3864,10 +4004,18 @@ class RecipesApp {
                     recipe.id = Date.now() + Math.random();
                 }
                 
-                // Crear elemento de receta
-                const recipeElement = document.createElement('div');
-                recipeElement.innerHTML = this.createRecipeCard(recipe);
-                fragment.appendChild(recipeElement.firstChild);
+                console.log(`🍽️ Creando tarjeta para: ${recipe.nombre} (ID: ${recipe.id})`);
+                
+                try {
+                    // Crear elemento de receta
+                    const recipeElement = document.createElement('div');
+                    const cardHtml = this.createRecipeCard(recipe);
+                    recipeElement.innerHTML = cardHtml;
+                    fragment.appendChild(recipeElement.firstChild);
+                    console.log(`✅ Tarjeta creada para: ${recipe.nombre}`);
+                } catch (error) {
+                    console.error(`❌ Error creando tarjeta para ${recipe.nombre}:`, error);
+                }
             }
             
             currentBatch++;
@@ -3877,8 +4025,11 @@ class RecipesApp {
                 requestAnimationFrame(processBatch);
             } else {
                 // Finalizar: insertar todo en el DOM de una vez
+                console.log('🎯 Insertando todas las tarjetas en el DOM...');
                 grid.innerHTML = '';
                 grid.appendChild(fragment);
+                
+                console.log('✅ Tarjetas insertadas. Configurando event listeners...');
                 
                 // Configurar event listeners después de insertar
                 this.setupRecipeEventListeners();
