@@ -67,8 +67,8 @@ class RecipesApp {
         // Inicializar actualización automática de puntos
         this.initializePointsAutoUpdate();
         
-        // ========== INICIALIZAR CDN ==========
-        this.initializeCDN();
+        // ========== INICIALIZAR CDN - DESHABILITADO TEMPORALMENTE ==========
+        // this.initializeCDN();
         
         // ========== FUNCIONES GLOBALES PARA MANEJO DE IMÁGENES ==========
         this.setupGlobalImageHandlers();
@@ -545,37 +545,10 @@ class RecipesApp {
         this.setupAdvancedLazyLoading();
     }
     
-    // Obtener URL optimizada para una imagen
+    // Obtener URL optimizada para una imagen - DESHABILITADO TEMPORALMENTE
     getOptimizedImageUrl(imagePath, options = {}) {
-        if (!imagePath) return this.getDefaultImageUrl();
-        
-        // Si ya está en cache, devolverla
-        const cacheKey = `${imagePath}_${JSON.stringify(options)}`;
-        if (this.cdnConfig.optimizedUrls.has(cacheKey)) {
-            return this.cdnConfig.optimizedUrls.get(cacheKey);
-        }
-        
-        let optimizedUrl;
-        
-        // Determinar el tipo de imagen
-        if (imagePath.startsWith('img/uploads/')) {
-            // Imagen subida por usuario - usar CDN de uploads
-            optimizedUrl = this.getUploadImageUrl(imagePath, options);
-        } else if (imagePath.startsWith('img/')) {
-            // Imagen estática - usar CDN estático
-            optimizedUrl = this.getStaticImageUrl(imagePath, options);
-        } else if (imagePath.startsWith('http')) {
-            // URL externa - usar tal como está
-            optimizedUrl = imagePath;
-        } else {
-            // Ruta relativa - convertir a estática
-            optimizedUrl = this.getStaticImageUrl(`img/${imagePath}`, options);
-        }
-        
-        // Guardar en cache
-        this.cdnConfig.optimizedUrls.set(cacheKey, optimizedUrl);
-        
-        return optimizedUrl;
+        // FORZAR USO DE RUTAS LOCALES SOLAMENTE
+        return this.processImageUrl(imagePath);
     }
     
     // URL para imágenes estáticas (SVG predefinidos)
@@ -625,9 +598,9 @@ class RecipesApp {
         return optimizedUrl;
     }
     
-    // URL por defecto cuando no hay imagen
+    // URL por defecto cuando no hay imagen - SIMPLIFICADO
     getDefaultImageUrl() {
-        return this.getStaticImageUrl('img/default-recipe.svg');
+        return 'img/default-recipe.svg';
     }
     
     // Precargar imágenes críticas
@@ -655,7 +628,7 @@ class RecipesApp {
             fallbackEmoji = '🍽️'
         } = options;
         
-        // Procesar la URL de imagen de manera más robusta
+        // Procesar la URL de imagen usando solo rutas locales
         let imageUrl = this.processImageUrl(imagePath);
         
         return `
@@ -684,6 +657,7 @@ class RecipesApp {
             return imagePath;
         }
         
+        // SIEMPRE usar rutas locales - deshabilitar CDN temporalmente
         // Si ya empieza con img/, usarla tal como está
         if (imagePath.startsWith('img/')) {
             return imagePath;
