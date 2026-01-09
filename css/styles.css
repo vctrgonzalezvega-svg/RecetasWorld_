@@ -8865,3 +8865,635 @@ img[loading="lazy"].image-loaded {
 }
 
 /* ============ NO RECIPES MESSAGE ============ */
+/* ========== ESTILOS PARA MODALES ADICIONALES ========== */
+
+/* Modal de configuración de usuario */
+.config-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.config-icon {
+    font-size: 3rem;
+    color: var(--primary-color);
+    margin-bottom: 15px;
+}
+
+.config-subtitle {
+    color: var(--text-light);
+    margin: 0;
+}
+
+.config-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.config-tab-btn {
+    background: none;
+    border: none;
+    padding: 12px 20px;
+    cursor: pointer;
+    border-radius: 8px 8px 0 0;
+    transition: all 0.3s ease;
+    color: var(--text-light);
+    font-weight: 500;
+}
+
+.config-tab-btn.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+.config-tab-content {
+    padding: 20px 0;
+}
+
+.profile-info {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
+    background: var(--card-bg);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.profile-avatar {
+    font-size: 4rem;
+    color: var(--primary-color);
+}
+
+.profile-details p {
+    margin: 8px 0;
+    color: var(--text-color);
+}
+
+.preferences-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.preference-item label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: var(--card-bg);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.preference-item label:hover {
+    border-color: var(--primary-color);
+    background: var(--primary-light);
+}
+
+.address-form {
+    max-width: 400px;
+}
+
+.address-form .form-group {
+    margin-bottom: 20px;
+}
+
+.address-form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.address-form input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+}
+
+.address-form input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+/* Modal de logros */
+.achievements-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.achievements-icon {
+    font-size: 3rem;
+    color: #ffd700;
+    margin-bottom: 15px;
+}
+
+.achievements-subtitle {
+    color: var(--text-light);
+    margin: 0;
+}
+
+.achievements-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+    background: var(--card-bg);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.stat-card i {
+    font-size: 2rem;
+    color: var(--primary-color);
+}
+
+.stat-number {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-color);
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+
+.achievements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.achievement-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+    background: var(--card-bg);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.achievement-item.locked {
+    opacity: 0.6;
+}
+
+.achievement-item:not(.locked) {
+    border-color: #ffd700;
+    background: linear-gradient(135deg, var(--card-bg) 0%, rgba(255, 215, 0, 0.1) 100%);
+}
+
+.achievement-icon {
+    font-size: 2rem;
+    color: var(--primary-color);
+    min-width: 50px;
+    text-align: center;
+}
+
+.achievement-item:not(.locked) .achievement-icon {
+    color: #ffd700;
+}
+
+.achievement-info h4 {
+    margin: 0 0 5px 0;
+    color: var(--text-color);
+}
+
+.achievement-info p {
+    margin: 0 0 10px 0;
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+.achievement-progress {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.progress-bar {
+    flex: 1;
+    height: 6px;
+    background: var(--border-color);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--primary-color);
+    transition: width 0.3s ease;
+}
+
+.achievement-item:not(.locked) .progress-fill {
+    background: #ffd700;
+}
+
+/* Estilos para admin panel mejorado */
+.admin-recipe-card,
+.admin-product-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: var(--card-bg);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+}
+
+.admin-recipe-card:hover,
+.admin-product-card:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.admin-recipe-image,
+.admin-product-image {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.admin-recipe-image img,
+.admin-product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.admin-recipe-info,
+.admin-product-info {
+    flex: 1;
+}
+
+.admin-recipe-info h4,
+.admin-product-info h4 {
+    margin: 0 0 5px 0;
+    color: var(--text-color);
+    font-size: 1.1rem;
+}
+
+.admin-recipe-info p,
+.admin-product-info p {
+    margin: 3px 0;
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+.admin-recipe-categories {
+    display: flex;
+    gap: 5px;
+    margin-top: 8px;
+}
+
+.category-tag {
+    background: var(--primary-light);
+    color: var(--primary-color);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.admin-recipe-actions,
+.admin-product-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-edit,
+.btn-delete,
+.btn-info {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    font-size: 14px;
+}
+
+.btn-edit {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.btn-edit:hover {
+    background: #1976d2;
+    color: white;
+}
+
+.btn-delete {
+    background: #ffebee;
+    color: #d32f2f;
+}
+
+.btn-delete:hover {
+    background: #d32f2f;
+    color: white;
+}
+
+.btn-info {
+    background: #f3e5f5;
+    color: #7b1fa2;
+}
+
+.btn-info:hover {
+    background: #7b1fa2;
+    color: white;
+}
+
+.admin-empty {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-light);
+    font-style: italic;
+}
+
+.admin-users-grid {
+    display: grid;
+    gap: 15px;
+}
+
+.admin-user-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+    background: var(--card-bg);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.admin-user-avatar {
+    font-size: 3rem;
+    color: var(--primary-color);
+}
+
+.admin-user-details h4 {
+    margin: 0 0 5px 0;
+    color: var(--text-color);
+}
+
+.admin-user-details p {
+    margin: 3px 0;
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+.admin-section-note {
+    margin-top: 20px;
+    padding: 15px;
+    background: var(--primary-light);
+    border-radius: 8px;
+    border-left: 4px solid var(--primary-color);
+}
+
+.admin-section-note p {
+    margin: 0;
+    color: var(--primary-color);
+    font-size: 0.9rem;
+}
+
+/* Responsive para modales */
+@media (max-width: 768px) {
+    .config-tabs {
+        flex-direction: column;
+    }
+    
+    .config-tab-btn {
+        border-radius: 8px;
+        margin-bottom: 5px;
+    }
+    
+    .profile-info {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .achievements-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .achievements-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .admin-recipe-card,
+    .admin-product-card {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .admin-recipe-image,
+    .admin-product-image {
+        width: 80px;
+        height: 80px;
+    }
+}
+/* ========== ESTILOS PARA PRODUCTOS ========== */
+
+.product-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    border: 1px solid var(--border-color);
+}
+
+.product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    border-color: var(--primary-color);
+}
+
+.product-image-container {
+    position: relative;
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+}
+
+.product-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.product-card:hover .product-image {
+    transform: scale(1.05);
+}
+
+.product-overlay {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+}
+
+.product-badge {
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.product-info {
+    padding: 20px;
+}
+
+.product-name {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0 0 10px 0;
+    color: var(--text-color);
+    line-height: 1.3;
+}
+
+.product-description {
+    color: var(--text-light);
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin: 0 0 15px 0;
+}
+
+.product-stock {
+    color: var(--text-light);
+    font-size: 0.85rem;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.product-footer {
+    display: flex;
+    justify-content: center;
+}
+
+.product-redeem-btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.product-redeem-btn:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+/* ========== ESTILOS PARA FAVORITOS VACÍOS ========== */
+
+.favorites-empty {
+    text-align: center;
+    padding: 60px 20px;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    color: var(--text-light);
+    margin-bottom: 20px;
+    opacity: 0.6;
+}
+
+.favorites-empty h3 {
+    color: var(--text-color);
+    margin: 0 0 10px 0;
+    font-size: 1.5rem;
+}
+
+.favorites-empty p {
+    color: var(--text-light);
+    margin: 0 0 25px 0;
+    line-height: 1.5;
+}
+
+.favorites-empty .btn-primary {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.favorites-empty .btn-primary:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+/* ========== RESPONSIVE PARA PRODUCTOS ========== */
+
+@media (max-width: 768px) {
+    .product-image-container {
+        height: 160px;
+    }
+    
+    .product-info {
+        padding: 15px;
+    }
+    
+    .product-name {
+        font-size: 1.1rem;
+    }
+    
+    .favorites-empty {
+        padding: 40px 15px;
+    }
+    
+    .empty-icon {
+        font-size: 3rem;
+    }
+    
+    .favorites-empty h3 {
+        font-size: 1.3rem;
+    }
+}
