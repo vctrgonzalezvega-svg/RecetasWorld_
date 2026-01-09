@@ -6800,7 +6800,6 @@ button#advancedFiltersBtn i,
         visibility: visible !important;
     }
 }
-}
 
 /* ========== ADMIN PANEL MODERN STYLES ========== */
 
@@ -8067,4 +8066,356 @@ button#advancedFiltersBtn i,
 
 .upload-card.rejected {
     border-color: var(--danger);
+}
+
+/* ========== VISTA PREVIA DE INGREDIENTES ========== */
+.ingredients-preview {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 10px 0;
+}
+
+.ingredients-preview h4 {
+    margin: 0 0 10px 0;
+    color: #495057;
+    font-size: 14px;
+}
+
+.ingredients-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.ingredient-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+}
+
+.ingredient-icon {
+    font-size: 18px;
+    min-width: 20px;
+}
+
+.ingredient-info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.ingredient-name {
+    font-weight: 500;
+    font-size: 13px;
+    color: #212529;
+}
+
+.ingredient-quantity {
+    font-size: 11px;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.ingredients-preview small {
+    color: #6c757d;
+    font-size: 11px;
+}
+
+/* Responsive para móviles */
+@media (max-width: 768px) {
+    .ingredients-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .ingredient-item {
+        padding: 8px 12px;
+    }
+}
+/* ========== FORMULARIO DE DIRECCIÓN ========== */
+.address-form-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.address-form-header {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.address-form-header h3 {
+    color: #2c3e50;
+    margin-bottom: 10px;
+    font-size: 24px;
+}
+
+.address-form-header p {
+    color: #7f8c8d;
+    margin: 0;
+}
+
+.address-form {
+    background: #f8f9fa;
+    padding: 25px;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #495057;
+    font-size: 14px;
+}
+
+.form-group label i {
+    margin-right: 8px;
+    color: #6c757d;
+    width: 16px;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+    box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+}
+
+.address-form-footer {
+    text-align: center;
+    margin-top: 20px;
+    padding: 15px;
+    background: #e8f4fd;
+    border-radius: 8px;
+    border-left: 4px solid #007bff;
+}
+
+.address-form-footer p {
+    margin: 0;
+    color: #0056b3;
+    font-size: 13px;
+}
+
+/* ========== PESTAÑA DE DIRECCIÓN ========== */
+.address-section {
+    padding: 20px;
+}
+
+.address-section h4 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+    font-size: 20px;
+}
+
+.empty-address {
+    text-align: center;
+    padding: 40px 20px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 2px dashed #dee2e6;
+}
+
+.empty-address-icon {
+    font-size: 48px;
+    color: #6c757d;
+    margin-bottom: 15px;
+}
+
+.empty-address h5 {
+    color: #495057;
+    margin-bottom: 10px;
+}
+
+.empty-address p {
+    color: #6c757d;
+    margin-bottom: 20px;
+}
+
+.address-card {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.address-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.address-header h5 {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 16px;
+}
+
+.address-details {
+    margin: 15px 0;
+}
+
+.address-field {
+    margin-bottom: 8px;
+    color: #495057;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.address-field i {
+    margin-right: 10px;
+    color: #6c757d;
+    width: 16px;
+}
+
+.address-footer {
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px solid #f1f3f4;
+}
+
+.address-footer small {
+    color: #6c757d;
+    font-size: 12px;
+}
+
+/* ========== HISTORIAL DE CANJES ========== */
+.redemptions-section {
+    margin-top: 30px;
+}
+
+.redemptions-section h5 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+    font-size: 16px;
+}
+
+.redemptions-list {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.redemption-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.redemption-item:last-child {
+    border-bottom: none;
+}
+
+.redemption-info h6 {
+    margin: 0 0 4px 0;
+    color: #2c3e50;
+    font-size: 14px;
+}
+
+.redemption-info p {
+    margin: 0;
+    color: #6c757d;
+    font-size: 12px;
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-processing {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-shipped {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.status-delivered {
+    background: #d4edda;
+    color: #155724;
+}
+
+.btn-small {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .address-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .redemption-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
 }
