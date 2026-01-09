@@ -111,6 +111,20 @@
 
     <!-- Main content -->
     <main class="main-content" id="mainContent">
+        <!-- BOTÓN DE DEBUG TEMPORAL -->
+        <div style="text-align: center; margin: 20px 0; padding: 20px; background: #ffebee; border-radius: 8px;">
+            <h3>🔧 Debug Tools</h3>
+            <button onclick="window.emergencyLoadRecipes?.()" style="background: #f44336; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin: 5px; cursor: pointer;">
+                🆘 Carga de Emergencia
+            </button>
+            <button onclick="window.forceLoadRecipes?.()" style="background: #ff9800; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin: 5px; cursor: pointer;">
+                🚨 Forzar Carga
+            </button>
+            <button onclick="console.log('App:', window.app); console.log('Recipes:', window.app?.recipes)" style="background: #2196f3; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin: 5px; cursor: pointer;">
+                📊 Debug Info
+            </button>
+        </div>
+        
         <!-- Vista inicial: Mejores calificadas -->
         <section class="recipes-section" id="homeSection">
             <h2 id="sectionTitle">Cargando recetas personalizadas...</h2>
