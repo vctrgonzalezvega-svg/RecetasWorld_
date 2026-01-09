@@ -1,0 +1,25 @@
+{
+  "name": "avance",
+  "version": "1.0.0",
+  "description": "RecetasWorld - servidor con SQLite y CDN optimizado",
+  "main": "server.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "sqlite3": "^5.1.7"
+  },
+  "keywords": [
+    "recetas",
+    "cdn",
+    "nodejs",
+    "sqlite",
+    "responsive-images"
+  ],
+  "author": "RecetasWorld Team",
+  "license": "MIT"
+}
