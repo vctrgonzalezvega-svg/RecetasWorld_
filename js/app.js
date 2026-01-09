@@ -761,17 +761,13 @@ class RecipesApp {
         // Hacer disponible la instancia de la app globalmente
         window.app = this;
         
-        // Inicializar cuando el DOM esté listo
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => this.initializeApp());
-        } else {
-            this.initializeApp();
-        }
+        // No llamar initializeApp aquí porque loadRecipesFromJSON ya lo hace
+        console.log('🚀 Constructor RecetasWorld completado');
     }
 
-    // Inicializar la aplicación
+    // Inicializar la aplicación (versión consolidada)
     initializeApp() {
-        console.log('🚀 Inicializando RecetasWorld...');
+        console.log(`🚀 Inicializando RecetasWorld con ${this.recipes ? this.recipes.length : 0} recetas`);
         
         // Verificar que todos los elementos críticos estén presentes
         const criticalElements = [
@@ -787,22 +783,40 @@ class RecipesApp {
             return;
         }
         
-        // Inicializar componentes
-        this.initializeEventListeners();
+        // Asegurar que todas las recetas tengan IDs válidos
+        this.ensureAllRecipesHaveValidIds();
+        
+        // Configurar event listeners
+        this.setupEventListeners();
+        
+        // Restaurar sesión si existe
+        this.restoreSession();
+        
+        // Mostrar vista inicial
         this.showHome();
         
-        console.log('✅ RecetasWorld inicializado correctamente');
-    }
-
-    // Inicializar event listeners principales
-    initializeEventListeners() {
-        // Event listeners ya existentes se mantienen en el constructor
-        // Esta función es para inicialización adicional si es necesaria
+        // Actualizar UI del header
+        this.updateHeaderUI();
         
-        // Optimizar imágenes existentes al cargar
+        // Renderizar mega menu
+        this.renderMegaMenu();
+        
+        // Iniciar actualizaciones en vivo
+        this.startLiveUpdates();
+        
+        // Generar calificaciones de bots si es necesario
+        if (this.recipes.length > 0) {
+            setTimeout(() => {
+                this.generateBotRatingsForAllRecipes();
+            }, 1000);
+        }
+        
+        // Optimizar imágenes existentes
         setTimeout(() => {
             this.optimizeExistingImages();
-        }, 1000);
+        }, 1500);
+        
+        console.log('✅ RecetasWorld inicializado correctamente');
     }
     
     // Detectar formato de imagen
@@ -2381,33 +2395,6 @@ class RecipesApp {
         }
     }
 
-    // Inicializar la aplicación
-    initializeApp() {
-        this.debugLog('Initializing application...');
-        
-        // Asegurar que todas las recetas tengan IDs válidos
-        this.ensureAllRecipesHaveValidIds();
-        
-        // Generar calificaciones de bots si es necesario
-        if (this.recipes.length > 0 && Object.keys(this.botRatingsGenerated).length === 0) {
-            this.debugLog('Generating initial bot ratings...');
-            setTimeout(() => {
-                this.generateBotRatingsForAllRecipes();
-            }, 1000);
-        }
-        
-        // Configurar event listeners
-        this.setupEventListeners();
-        
-        // Mostrar vista inicial
-        this.showHome();
-        
-        // Actualizar UI del header
-        this.updateHeaderUI();
-        
-        this.debugLog('Application initialized successfully');
-    }
-
     // Función centralizada para actualizar puntos en toda la interfaz
     updatePointsDisplay() {
         if (!this.currentUser) return;
@@ -2539,24 +2526,6 @@ class RecipesApp {
     debugLog(msg) {
         // Debug deshabilitado - solo console.log
         console.log(msg);
-    }
-
-    initializeApp() {
-        console.log(`Inicializando app con ${this.recipes ? this.recipes.length : 0} recetas`);
-        
-        // Verificar y reparar todas las recetas al inicio
-        this.ensureAllRecipesHaveValidIds();
-        
-        this.setupEventListeners();
-        this.restoreSession();
-        this.showHome();
-        this.startLiveUpdates();
-        this.renderMegaMenu();
-        
-        // Generar calificaciones de bots para recetas que no las tengan
-        setTimeout(() => {
-            this.generateBotRatingsForAllRecipes();
-        }, 1000); // Esperar 1 segundo después de cargar la app
     }
 
     ensureAllRecipesHaveValidIds() {
@@ -3768,16 +3737,31 @@ class RecipesApp {
     }
 
     showHome() {
+        console.log('🏠 Ejecutando showHome()');
         this.currentCategory = null;
         this.lastSearchQuery = '';
         
+        // Verificar que tenemos recetas
+        if (!this.recipes || this.recipes.length === 0) {
+            console.warn('⚠️ No hay recetas disponibles');
+            document.getElementById('sectionTitle').textContent = 'Cargando recetas...';
+            const grid = document.getElementById('recipesGrid');
+            if (grid) {
+                grid.innerHTML = `
+                    <div class="loading-recipes">
+                        <span>Cargando recetas...</span>
+                    </div>
+                `;
+            }
+            return;
+        }
+        
         // Mostrar TODAS las recetas ordenadas por preferencias del usuario
         const allRecipesPersonalized = this.getAllRecipesPersonalized();
+        console.log(`🏠 Mostrando ${allRecipesPersonalized.length} recetas personalizadas`);
         
         document.getElementById('sectionTitle').textContent = 'Todas las Recetas - Personalizadas para Ti';
         this.displayRecipes(allRecipesPersonalized);
-        
-        console.log(`🏠 Mostrando ${allRecipesPersonalized.length} recetas personalizadas`);
     }
 
     // Nueva función para obtener todas las recetas ordenadas por preferencias
@@ -4197,6 +4181,8 @@ class RecipesApp {
     }
 
     displayRecipes(recipes) {
+        console.log('📋 Ejecutando displayRecipes con', recipes ? recipes.length : 0, 'recetas');
+        
         const grid = document.getElementById('recipesGrid');
         
         if (!grid) {
@@ -4204,7 +4190,8 @@ class RecipesApp {
             return;
         }
         
-        if (recipes.length === 0) {
+        if (!recipes || recipes.length === 0) {
+            console.warn('⚠️ No hay recetas para mostrar');
             grid.innerHTML = `
                 <div class="no-recipes" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
                     <i class="fas fa-search" style="font-size: 48px; color: #6c757d; margin-bottom: 15px;"></i>
@@ -4213,6 +4200,8 @@ class RecipesApp {
             `;
             return;
         }
+
+        console.log('📋 Iniciando renderizado de', recipes.length, 'recetas');
 
         // Limpiar grid inmediatamente para mejor UX
         grid.innerHTML = '<div class="loading-recipes">Cargando recetas...</div>';
@@ -4227,6 +4216,8 @@ class RecipesApp {
         const processBatch = () => {
             const start = currentBatch * batchSize;
             const end = Math.min(start + batchSize, recipes.length);
+            
+            console.log(`📋 Procesando lote ${currentBatch + 1}: recetas ${start + 1}-${end}`);
             
             // Crear contenedor temporal para el lote
             const tempContainer = document.createElement('div');
@@ -4252,6 +4243,7 @@ class RecipesApp {
                 requestAnimationFrame(processBatch);
             } else {
                 // Finalizar: insertar todo en el DOM de una vez
+                console.log('📋 Insertando todas las recetas en el DOM');
                 grid.innerHTML = '';
                 grid.appendChild(fragment);
                 
@@ -9567,12 +9559,24 @@ class RecipesApp {
     }
 }
 
+// ========== INICIALIZACIÓN DE LA APLICACIÓN ==========
 // Variable global para la instancia de la app
 let app;
 
 // Inicializar cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 Inicializando RecetasWorld...');
+    
+    // Crear una sola instancia de la aplicación
     window.app = new RecipesApp();
-    app = window.app; // Para compatibilidad
+    app = window.app; // Para compatibilidad con código existente
+    
+    console.log('✅ RecetasWorld creado exitosamente');
 });
+
+// Fallback para casos donde DOMContentLoaded ya se ejecutó
+if (document.readyState !== 'loading') {
+    console.log('🌟 DOM ya estaba cargado, creando instancia inmediatamente...');
+    window.app = new RecipesApp();
+    app = window.app;
+}
