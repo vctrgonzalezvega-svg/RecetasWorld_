@@ -763,11 +763,103 @@ class RecipesApp {
         
         // No llamar initializeApp aquí porque loadRecipesFromJSON ya lo hace
         console.log('🚀 Constructor RecetasWorld completado');
+        
+        // FUNCIÓN DE EMERGENCIA: Cargar recetas directamente si no se cargan
+        window.forceLoadRecipes = () => {
+            console.log('🚨 FORZANDO CARGA DE RECETAS...');
+            fetch('/data/recipes.json')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('🚨 Datos recibidos:', data);
+                    if (data && data.recetas && Array.isArray(data.recetas)) {
+                        this.recipes = data.recetas;
+                        console.log('🚨 Recetas asignadas:', this.recipes.length);
+                        this.showHome();
+                    } else {
+                        console.error('🚨 Datos inválidos');
+                    }
+                })
+                .catch(error => {
+                    console.error('🚨 Error forzando carga:', error);
+                });
+        };
+        
+        // FUNCIÓN DE EMERGENCIA SIMPLE: Cargar y mostrar recetas inmediatamente
+        window.emergencyLoadRecipes = () => {
+            console.log('🆘 CARGA DE EMERGENCIA...');
+            fetch('/data/recipes.json')
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.recetas && Array.isArray(data.recetas)) {
+                        console.log('🆘 Cargando', data.recetas.length, 'recetas directamente');
+                        
+                        const grid = document.getElementById('recipesGrid');
+                        if (!grid) {
+                            console.error('🆘 No se encontró recipesGrid');
+                            return;
+                        }
+                        
+                        grid.innerHTML = '';
+                        
+                        data.recetas.slice(0, 12).forEach(recipe => {
+                            const card = document.createElement('div');
+                            card.className = 'recipe-card';
+                            card.innerHTML = `
+                                <div class="recipe-image-container">
+                                    <img src="${recipe.imagen || 'img/default-recipe.svg'}" 
+                                         alt="${recipe.nombre}" 
+                                         class="recipe-image"
+                                         onerror="this.src='img/default-recipe.svg'">
+                                </div>
+                                <div class="recipe-info">
+                                    <h3 class="recipe-name">${recipe.nombre}</h3>
+                                    <div class="recipe-country">
+                                        <i class="fas fa-map-marker-alt"></i> ${recipe.pais}
+                                    </div>
+                                    <div class="recipe-rating">
+                                        <div class="stars">
+                                            ${Array.from({length: 5}, (_, i) => 
+                                                `<i class="fas fa-star ${i < Math.round(recipe.calificacion || 0) ? 'active' : ''}"></i>`
+                                            ).join('')}
+                                        </div>
+                                        <span class="rating-number">${(recipe.calificacion || 0).toFixed(1)}</span>
+                                    </div>
+                                </div>
+                            `;
+                            grid.appendChild(card);
+                        });
+                        
+                        console.log('🆘 Recetas mostradas exitosamente');
+                    }
+                })
+                .catch(error => {
+                    console.error('🆘 Error en carga de emergencia:', error);
+                });
+        };
     }
 
     // Inicializar la aplicación (versión consolidada)
     initializeApp() {
         console.log(`🚀 Inicializando RecetasWorld con ${this.recipes ? this.recipes.length : 0} recetas`);
+        
+        // DEBUG: Verificar estado de las recetas
+        if (!this.recipes) {
+            console.error('❌ this.recipes es null/undefined');
+            return;
+        }
+        
+        if (!Array.isArray(this.recipes)) {
+            console.error('❌ this.recipes no es un array:', typeof this.recipes);
+            return;
+        }
+        
+        if (this.recipes.length === 0) {
+            console.warn('⚠️ this.recipes está vacío');
+            return;
+        }
+        
+        console.log('✅ Recetas disponibles:', this.recipes.length);
+        console.log('✅ Primera receta:', this.recipes[0]);
         
         // Verificar que todos los elementos críticos estén presentes
         const criticalElements = [
@@ -783,6 +875,8 @@ class RecipesApp {
             return;
         }
         
+        console.log('✅ Todos los elementos críticos encontrados');
+        
         // Asegurar que todas las recetas tengan IDs válidos
         this.ensureAllRecipesHaveValidIds();
         
@@ -793,6 +887,7 @@ class RecipesApp {
         this.restoreSession();
         
         // Mostrar vista inicial
+        console.log('🏠 Llamando a showHome()...');
         this.showHome();
         
         // Actualizar UI del header
@@ -3737,13 +3832,16 @@ class RecipesApp {
     }
 
     showHome() {
-        console.log('🏠 Ejecutando showHome()');
+        console.log('🏠 === EJECUTANDO showHome() ===');
+        console.log('🏠 this.recipes:', this.recipes);
+        console.log('🏠 this.recipes.length:', this.recipes ? this.recipes.length : 'undefined');
+        
         this.currentCategory = null;
         this.lastSearchQuery = '';
         
         // Verificar que tenemos recetas
         if (!this.recipes || this.recipes.length === 0) {
-            console.warn('⚠️ No hay recetas disponibles');
+            console.warn('⚠️ No hay recetas disponibles en showHome()');
             document.getElementById('sectionTitle').textContent = 'Cargando recetas...';
             const grid = document.getElementById('recipesGrid');
             if (grid) {
@@ -3756,16 +3854,40 @@ class RecipesApp {
             return;
         }
         
+        console.log('🏠 Llamando a getAllRecipesPersonalized()...');
+        
         // Mostrar TODAS las recetas ordenadas por preferencias del usuario
         const allRecipesPersonalized = this.getAllRecipesPersonalized();
-        console.log(`🏠 Mostrando ${allRecipesPersonalized.length} recetas personalizadas`);
+        console.log(`🏠 getAllRecipesPersonalized() devolvió ${allRecipesPersonalized ? allRecipesPersonalized.length : 'null'} recetas`);
+        
+        if (!allRecipesPersonalized || allRecipesPersonalized.length === 0) {
+            console.error('❌ getAllRecipesPersonalized() devolvió vacío');
+            return;
+        }
         
         document.getElementById('sectionTitle').textContent = 'Todas las Recetas - Personalizadas para Ti';
+        
+        console.log('🏠 Llamando a displayRecipes()...');
         this.displayRecipes(allRecipesPersonalized);
+        console.log('🏠 === FIN showHome() ===');
     }
 
     // Nueva función para obtener todas las recetas ordenadas por preferencias
     getAllRecipesPersonalized() {
+        console.log('🎯 === EJECUTANDO getAllRecipesPersonalized() ===');
+        console.log('🎯 this.recipes:', this.recipes);
+        console.log('🎯 this.recipes.length:', this.recipes ? this.recipes.length : 'undefined');
+        
+        if (!this.recipes || !Array.isArray(this.recipes)) {
+            console.error('❌ this.recipes no es válido en getAllRecipesPersonalized()');
+            return [];
+        }
+        
+        if (this.recipes.length === 0) {
+            console.warn('⚠️ this.recipes está vacío en getAllRecipesPersonalized()');
+            return [];
+        }
+        
         // Si no hay suficientes datos de preferencias, mostrar por calificación
         const totalPreferences = 
             Object.keys(this.userPreferences.favoriteCategories).length +
@@ -3773,9 +3895,13 @@ class RecipesApp {
             this.userPreferences.searchHistory.length +
             this.userPreferences.viewHistory.length;
 
+        console.log('🎯 Total preferencias:', totalPreferences);
+
         if (totalPreferences < 3) {
             console.log('🤖 Pocas preferencias, ordenando por calificación');
-            return [...this.recipes].sort((a, b) => (b.calificacion || 0) - (a.calificacion || 0));
+            const sorted = [...this.recipes].sort((a, b) => (b.calificacion || 0) - (a.calificacion || 0));
+            console.log('🎯 Devolviendo', sorted.length, 'recetas ordenadas por calificación');
+            return sorted;
         }
 
         // Calcular puntuaciones para todas las recetas
@@ -3791,6 +3917,7 @@ class RecipesApp {
 
         console.log('🎯 Recetas ordenadas por preferencias del usuario');
         console.log('📊 Top 5 recomendadas:', sortedRecipes.slice(0, 5).map(r => r.nombre));
+        console.log('🎯 Devolviendo', sortedRecipes.length, 'recetas personalizadas');
         
         return sortedRecipes;
     }
