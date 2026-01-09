@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RecetasWorld - Sabores del Mundo 🌍</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-container">
+            <div class="hamburger" id="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-globe-americas"></i>
+                    <i class="fas fa-utensils logo-utensils"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>RecetasWorld</h1>
+                    <span class="logo-subtitle">Sabores del Mundo</span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button id="loginBtn" class="btn-login">
+                    <i class="fas fa-user"></i>
+                    <span>Iniciar sesión</span>
+                </button>
+                <button id="adminPanelBtn" class="btn-primary" style="display:none;">
+                    Panel Admin
+                </button>
+            </div>
+        </div>
+
+        <!-- Menú -->
+        <nav class="menu" id="menu">
+            <ul>
+                <li><a href="#" class="menu-link"><i class="fas fa-home"></i> Inicio</a></li>
+                <li><a href="#" class="menu-link"><i class="fas fa-heart"></i> Favoritos</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Barra de búsqueda -->
+    <div class="search-bar-container">
+        <input type="text" id="searchInput" class="search-bar" placeholder="🔍 Busca tacos, sushi, pasta, curry...">
+        <button class="search-btn">
+            <i class="fas fa-search"></i>
+            <span>Buscar</span>
+        </button>
+    </div>
+
+    <!-- Contenido principal -->
+    <main class="main-content">
+        <section class="recipes-section">
+            <h2 id="sectionTitle">Cargando recetas...</h2>
+            <div class="recipes-grid" id="recipesGrid">
+                <div style="text-align: center; padding: 40px;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 48px; color: #6c757d;"></i>
+                    <p>Cargando recetas...</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal de receta -->
+    <div class="modal" id="recipeModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="document.getElementById('recipeModal').classList.remove('active')">&times;</button>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+
+    <!-- Modal de login -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="document.getElementById('loginModal').classList.remove('active')">&times;</button>
+            <div class="modal-body">
+                <h2>Iniciar Sesión</h2>
+                <p>Funcionalidad de login en desarrollo...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de admin -->
+    <div class="modal" id="adminPanel">
+        <div class="modal-content modal-large">
+            <button class="modal-close" onclick="document.getElementById('adminPanel').classList.remove('active')">&times;</button>
+            <div class="modal-body">
+                <h2>Panel de Administrador</h2>
+                <p>Funcionalidad de admin en desarrollo...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script simplificado -->
+    <script src="js/app-simple.js"></script>
+</body>
+</html>
