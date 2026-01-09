@@ -645,7 +645,6 @@ class RecipesApp {
         });
     }
     
-    // Crear elemento img con lazy loading y fallback mejorado
     // Crear elemento img optimizado y simple
     createOptimizedImage(imagePath, alt = '', options = {}) {
         const {
@@ -667,12 +666,9 @@ class RecipesApp {
                 loading="${loading}"
                 ${width ? `width="${width}" height="${height}"` : ''}
                 style="object-fit: cover; ${width && height ? `aspect-ratio: ${width}/${height};` : ''} transition: opacity 0.3s ease;"
-                onerror="window.app?.handleImageError?.(this, '${fallbackEmoji}') || this.handleImageErrorFallback('${fallbackEmoji}')"
-                onload="window.app?.handleImageLoad?.(this) || this.handleImageLoadFallback()"
+                onerror="this.src='img/default-recipe.svg'; console.warn('Error cargando imagen:', this.src);"
+                onload="this.style.opacity='1';"
             >
-            <div class="recipe-emoji-fallback" style="display:none; font-size: 4rem; color: var(--primary); justify-content: center; align-items: center; min-height: ${height || 200}px; background: #f8f9fa; border-radius: 8px;">
-                ${fallbackEmoji}
-            </div>
         `;
     }
 
@@ -761,105 +757,12 @@ class RecipesApp {
         // Hacer disponible la instancia de la app globalmente
         window.app = this;
         
-        // No llamar initializeApp aquí porque loadRecipesFromJSON ya lo hace
         console.log('🚀 Constructor RecetasWorld completado');
-        
-        // FUNCIÓN DE EMERGENCIA: Cargar recetas directamente si no se cargan
-        window.forceLoadRecipes = () => {
-            console.log('🚨 FORZANDO CARGA DE RECETAS...');
-            fetch('/data/recipes.json')
-                .then(response => response.json())
-                .then(data => {
-                    console.log('🚨 Datos recibidos:', data);
-                    if (data && data.recetas && Array.isArray(data.recetas)) {
-                        this.recipes = data.recetas;
-                        console.log('🚨 Recetas asignadas:', this.recipes.length);
-                        this.showHome();
-                    } else {
-                        console.error('🚨 Datos inválidos');
-                    }
-                })
-                .catch(error => {
-                    console.error('🚨 Error forzando carga:', error);
-                });
-        };
-        
-        // FUNCIÓN DE EMERGENCIA SIMPLE: Cargar y mostrar recetas inmediatamente
-        window.emergencyLoadRecipes = () => {
-            console.log('🆘 CARGA DE EMERGENCIA...');
-            fetch('/data/recipes.json')
-                .then(response => response.json())
-                .then(data => {
-                    if (data && data.recetas && Array.isArray(data.recetas)) {
-                        console.log('🆘 Cargando', data.recetas.length, 'recetas directamente');
-                        
-                        const grid = document.getElementById('recipesGrid');
-                        if (!grid) {
-                            console.error('🆘 No se encontró recipesGrid');
-                            return;
-                        }
-                        
-                        grid.innerHTML = '';
-                        
-                        data.recetas.slice(0, 12).forEach(recipe => {
-                            const card = document.createElement('div');
-                            card.className = 'recipe-card';
-                            card.innerHTML = `
-                                <div class="recipe-image-container">
-                                    <img src="${recipe.imagen || 'img/default-recipe.svg'}" 
-                                         alt="${recipe.nombre}" 
-                                         class="recipe-image"
-                                         onerror="this.src='img/default-recipe.svg'">
-                                </div>
-                                <div class="recipe-info">
-                                    <h3 class="recipe-name">${recipe.nombre}</h3>
-                                    <div class="recipe-country">
-                                        <i class="fas fa-map-marker-alt"></i> ${recipe.pais}
-                                    </div>
-                                    <div class="recipe-rating">
-                                        <div class="stars">
-                                            ${Array.from({length: 5}, (_, i) => 
-                                                `<i class="fas fa-star ${i < Math.round(recipe.calificacion || 0) ? 'active' : ''}"></i>`
-                                            ).join('')}
-                                        </div>
-                                        <span class="rating-number">${(recipe.calificacion || 0).toFixed(1)}</span>
-                                    </div>
-                                </div>
-                            `;
-                            grid.appendChild(card);
-                        });
-                        
-                        console.log('🆘 Recetas mostradas exitosamente');
-                    }
-                })
-                .catch(error => {
-                    console.error('🆘 Error en carga de emergencia:', error);
-                });
-        };
     }
 
     // Inicializar la aplicación (versión consolidada)
     initializeApp() {
         console.log(`🚀 Inicializando RecetasWorld con ${this.recipes ? this.recipes.length : 0} recetas`);
-        
-        // DEBUG: Verificar estado de las recetas
-        if (!this.recipes) {
-            console.error('❌ this.recipes es null/undefined');
-            return;
-        }
-        
-        if (!Array.isArray(this.recipes)) {
-            console.error('❌ this.recipes no es un array:', typeof this.recipes);
-            return;
-        }
-        
-        if (this.recipes.length === 0) {
-            console.warn('⚠️ this.recipes está vacío');
-            return;
-        }
-        
-        console.log('✅ Recetas disponibles:', this.recipes.length);
-        console.log('✅ Primera receta:', this.recipes[0]);
         
         // Verificar que todos los elementos críticos estén presentes
         const criticalElements = [
@@ -875,8 +778,6 @@ class RecipesApp {
             return;
         }
         
-        console.log('✅ Todos los elementos críticos encontrados');
-        
         // Asegurar que todas las recetas tengan IDs válidos
         this.ensureAllRecipesHaveValidIds();
         
@@ -887,7 +788,6 @@ class RecipesApp {
         this.restoreSession();
         
         // Mostrar vista inicial
-        console.log('🏠 Llamando a showHome()...');
         this.showHome();
         
         // Actualizar UI del header
@@ -2236,150 +2136,44 @@ class RecipesApp {
         }, 800);
     }
 
-    // Cargar recetas desde JSON usando AJAX
+    // Cargar recetas desde JSON - versión simplificada
     loadRecipesFromJSON() {
-        console.log('Inicio: loadRecipesFromJSON');
-        // Leer posibles recetas locales (solo como último recurso)
-        const localRaw = localStorage.getItem('localRecipes');
-        console.log('localRaw presente:', localRaw ? 'sí' : 'no');
-        // Intentar cargar desde la API cuando exista, sino desde el JSON local
-        console.log('Intentando fetch API /api/recipes');
-        // Detectar si se está abriendo por file:// — esto bloqueará fetch por motivos de CORS/file access
-        if (location && location.protocol === 'file:') {
-            this.debugLog('Aviso: la página se abrió via file:// — fetch() no funcionará. Usa un servidor local (Apache/XAMPP o `node server.js`).');
-            // intentar cargar directamente desde data/recipes.json
-            return fetch('data/recipes.json')
-                .then(r => r.json())
-                .then(data => {
-                    const arr = Array.isArray(data.recetas) ? data.recetas : [];
-                    this.debugLog('data/recipes.json length (file protocol): ' + arr.length);
-                    this.recipes = arr;
-                    this.applyRatingStatsToRecipes();
-                    this.applyRecipeOverrides();
-                    this.initializeApp();
-                })
-                .catch(err => {
-                    this.debugLog('Fallo fetch data/recipes.json en file protocol: ' + (err && err.message ? err.message : String(err)));
-                    
-                    // Fallback: usar recipesDatabase si está disponible
-                    if (typeof recipesDatabase !== 'undefined' && Array.isArray(recipesDatabase)) {
-                        this.debugLog('Usando recipesDatabase como fallback en file protocol: ' + recipesDatabase.length + ' recetas');
-                        this.recipes = recipesDatabase;
-                        this.applyRatingStatsToRecipes();
-                        this.applyRecipeOverrides();
-                        this.initializeApp();
-                    } else {
-                        this.recipes = [];
-                        this.initializeApp();
-                    }
-                });
-        }
-
-        this.apiFetch('/api/recipes')
+        console.log('🔄 Cargando recetas desde data/recipes.json...');
+        
+        fetch('data/recipes.json')
             .then(response => {
-                this.debugLog('API respuesta recibida (status ' + (response && response.status) + ')');
-                if (!response.ok) throw new Error('API no disponible');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 return response.json();
             })
             .then(data => {
-                const apiRecipes = Array.isArray(data.recetas) ? data.recetas : [];
-                this.debugLog('API recetas: ' + apiRecipes.length);
-                if (apiRecipes.length > 0) {
-                    this.recipes = apiRecipes;
+                console.log('📄 Datos cargados:', data);
+                
+                if (data && Array.isArray(data.recetas)) {
+                    this.recipes = data.recetas;
+                    console.log(`✅ ${this.recipes.length} recetas cargadas exitosamente`);
+                    
+                    // Asegurar que todas las recetas tengan IDs válidos
+                    this.ensureAllRecipesHaveValidIds();
+                    
+                    // Aplicar estadísticas y overrides
                     this.applyRatingStatsToRecipes();
                     this.applyRecipeOverrides();
+                    
+                    // Inicializar la aplicación
                     this.initializeApp();
-                    try { localStorage.removeItem('localRecipes'); } catch(e) {}
                 } else {
-                    this.debugLog('API devolvió 0 recetas; probando localRaw y luego data/recipes.json');
-                    // Si la API trae 0, intentar usar local primero y luego JSON
-                    try {
-                        if (localRaw) {
-                            const parsedLocal = JSON.parse(localRaw);
-                            if (Array.isArray(parsedLocal) && parsedLocal.length > 0) {
-                                this.debugLog('Cargando recetas desde localRaw: ' + parsedLocal.length);
-                                this.recipes = parsedLocal;
-                                this.applyRatingStatsToRecipes();
-                                this.applyRecipeOverrides();
-                                this.initializeApp();
-                                return;
-                            }
-                        }
-                    } catch(e) { this.debugLog('Error parseando localRaw: ' + (e && e.message ? e.message : String(e))); }
-
-                    this.debugLog('Cargando data/recipes.json como fallback');
-                    return fetch('data/recipes.json')
-                        .then(r => r.json())
-                        .then(fallback => {
-                            const arr = Array.isArray(fallback.recetas) ? fallback.recetas : [];
-                            this.debugLog('data/recipes.json length: ' + arr.length);
-                            this.recipes = arr;
-                            this.applyRatingStatsToRecipes();
-                            this.applyRecipeOverrides();
-                            this.initializeApp();
-                        })
-                        .catch(err => {
-                            this.debugLog('Error cargando data/recipes.json: ' + (err && err.message ? err.message : String(err)));
-                            
-                            // Fallback: usar recipesDatabase si está disponible
-                            if (typeof recipesDatabase !== 'undefined' && Array.isArray(recipesDatabase)) {
-                                this.debugLog('Usando recipesDatabase como fallback: ' + recipesDatabase.length + ' recetas');
-                                this.recipes = recipesDatabase;
-                                this.applyRatingStatsToRecipes();
-                                this.applyRecipeOverrides();
-                                this.initializeApp();
-                            } else {
-                                this.recipes = [];
-                                this.initializeApp();
-                            }
-                        });
+                    console.error('❌ Formato de datos inválido:', data);
+                    this.recipes = [];
+                    this.initializeApp();
                 }
             })
-            .catch((err) => {
-                this.debugLog('API fetch falló: ' + (err && err.message ? err.message : String(err)));
-                // Si la API falla: intentar local y luego JSON
-                try {
-                    if (localRaw) {
-                        const parsedLocal = JSON.parse(localRaw);
-                        if (Array.isArray(parsedLocal) && parsedLocal.length > 0) {
-                            this.debugLog('Cargando recetas desde localRaw en catch: ' + parsedLocal.length);
-                            this.recipes = parsedLocal;
-                            this.applyRatingStatsToRecipes();
-                            this.applyRecipeOverrides();
-                            this.initializeApp();
-                            return;
-                        }
-                    }
-                } catch(e) { this.debugLog('Error parseando localRaw en catch: ' + (e && e.message ? e.message : String(e))); }
-                this.debugLog('Intentando cargar data/recipes.json en catch');
-                fetch('data/recipes.json')
-                    .then(response => response.json())
-                    .then(data => {
-                        const arr = Array.isArray(data.recetas) ? data.recetas : [];
-                        this.debugLog('data/recipes.json length (catch): ' + arr.length);
-                        this.recipes = arr;
-                        this.applyRatingStatsToRecipes();
-                        this.applyRecipeOverrides();
-                        this.initializeApp();
-                    })
-                    .catch(error => {
-                        console.error('Error cargando recetas:', error);
-                        this.debugLog('Error cargando recetas final: ' + (error && error.message ? error.message : String(error)));
-                        
-                        // Último fallback: usar recipesDatabase si está disponible
-                        if (typeof recipesDatabase !== 'undefined' && Array.isArray(recipesDatabase)) {
-                            this.debugLog('Usando recipesDatabase como último fallback: ' + recipesDatabase.length + ' recetas');
-                            this.recipes = recipesDatabase;
-                            this.applyRatingStatsToRecipes();
-                            this.applyRecipeOverrides();
-                            this.initializeApp();
-                        } else {
-                            this.debugLog('recipesDatabase no disponible');
-                            this.recipes = [];
-                            this.initializeApp();
-                            this.showNotification('Error al cargar las recetas ❌');
-                        }
-                    });
+            .catch(error => {
+                console.error('❌ Error cargando recetas:', error);
+                this.recipes = [];
+                this.initializeApp();
+                this.showNotification('Error al cargar las recetas. Por favor, recarga la página.', 'error');
             });
     }
 
@@ -2984,271 +2778,13 @@ class RecipesApp {
         });
     }
 
-    // Configurar todos los event listeners
+    // DUPLICATE FUNCTION REMOVED - FUNCTIONALITY MERGED INTO FIRST setupEventListeners
+    /* 
     setupEventListeners() {
-        // Event delegation para botones de recetas
-        document.addEventListener('click', (e) => {
-            // Botones de reseñas
-            if (e.target.closest('.reviews-btn')) {
-                e.preventDefault();
-                e.stopPropagation();
-                const btn = e.target.closest('.reviews-btn');
-                const recipeId = btn.getAttribute('data-recipe-id');
-                if (recipeId) {
-                    console.log('Reviews button clicked for recipe:', recipeId);
-                    this.showRecipeReviews(recipeId);
-                }
-                return;
-            }
-            
-            // Botones de favoritos
-            if (e.target.closest('.favorite-btn')) {
-                e.preventDefault();
-                e.stopPropagation();
-                const btn = e.target.closest('.favorite-btn');
-                const recipeId = btn.getAttribute('data-recipe-id');
-                if (recipeId && !isNaN(parseInt(recipeId))) {
-                    this.toggleFavorite(recipeId);
-                    btn.classList.toggle('active');
-                } else {
-                    console.error('❌ Invalid recipe ID for favorite button:', recipeId);
-                }
-                return;
-            }
-            
-            // Botones de subir imagen
-            if (e.target.closest('.btn-upload-image')) {
-                e.preventDefault();
-                e.stopPropagation();
-                const btn = e.target.closest('.btn-upload-image');
-                const recipeId = parseInt(btn.getAttribute('data-recipe-id'));
-                if (recipeId && !isNaN(recipeId)) {
-                    this.openImageUploadForRecipe(recipeId);
-                } else {
-                    console.error('❌ Invalid recipe ID for upload button:', recipeId);
-                }
-                return;
-            }
-            
-            // Click en tarjetas de recetas (pero no en botones)
-            if (e.target.closest('.recipe-card') && !e.target.closest('button')) {
-                const card = e.target.closest('.recipe-card');
-                const recipeId = card.getAttribute('data-recipe-id');
-                if (recipeId) {
-                    const recipe = this.recipes.find(r => String(r.id) === String(recipeId));
-                    if (recipe) {
-                        this.openRecipeDetail(recipe);
-                    }
-                }
-                return;
-            }
-        });
-
-        // Búsqueda
-        const searchInput = document.getElementById('searchInput');
-        const searchBtn = document.querySelector('.search-btn');
-        const surpriseBtn = document.getElementById('surpriseBtn');
-
-        if (searchInput) {
-            searchInput.addEventListener('input', (e) => {
-                this.updateSearchSuggestions(e.target.value);
-            });
-            
-            searchInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    this.search(e.target.value);
-                    this.hideSearchSuggestions();
-                }
-            });
-            
-            searchInput.addEventListener('blur', () => {
-                setTimeout(() => this.hideSearchSuggestions(), 200);
-            });
-        }
-
-        if (searchBtn) {
-            searchBtn.addEventListener('click', () => {
-                const query = searchInput ? searchInput.value : '';
-                this.search(query);
-                this.hideSearchSuggestions();
-            });
-        }
-
-        if (surpriseBtn) {
-            surpriseBtn.addEventListener('click', () => this.surpriseMe());
-        }
-
-        // Menú hamburguesa
-        const hamburger = document.getElementById('hamburger');
-        const megaMenu = document.getElementById('megaMenu');
-
-        if (hamburger) {
-            hamburger.addEventListener('click', () => {
-                this.toggleMenu();
-            });
-        }
-
-        // Enlaces del mega menú
-        document.querySelectorAll('.mega-link[data-category]').forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const category = link.getAttribute('data-category');
-                this.filterByCategory(category);
-                this.closeMenu();
-            });
-        });
-
-        // Logo - volver al inicio
-        const logo = document.querySelector('.logo');
-        if (logo) {
-            logo.addEventListener('click', () => {
-                this.showHome();
-                this.closeMenu();
-            });
-        }
-
-        // Enlaces de navegación
-        const favoritesLink = document.getElementById('favorites-link');
-        if (favoritesLink) {
-            favoritesLink.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.showFavorites();
-                this.closeMenu();
-            });
-        }
-
-        // Cerrar modales
-        document.querySelectorAll('.modal-close').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const modal = e.target.closest('.modal');
-                if (modal) {
-                    modal.classList.remove('active');
-                    this.showHeaderAndSearch();
-                }
-            });
-        });
-
-        // Búsqueda en admin
-        const adminRecipeSearch = document.getElementById('adminRecipeSearch');
-        const adminUserSearch = document.getElementById('adminUserSearch');
-        const adminProductSearch = document.getElementById('adminProductSearch');
-
-        if (adminRecipeSearch) adminRecipeSearch.addEventListener('input', () => this.loadAdminLists());
-        if (adminUserSearch) adminUserSearch.addEventListener('input', () => this.loadAdminLists());
-        if (adminProductSearch) adminProductSearch.addEventListener('input', () => this.loadAdminLists());
-
-        const plannerTrigger = document.getElementById('planner-link') || document.getElementById('plannerBtn');
-        if (plannerTrigger) {
-            plannerTrigger.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.showWeeklyPlanner();
-                this.closeMenu();
-            });
-        }
-
-        // Cerrar modales al hacer click fuera
-        window.addEventListener('click', (e) => {
-            const recipeModalEl = document.getElementById('recipeModal');
-            if (recipeModalEl && e.target.id === 'recipeModal') {
-                recipeModalEl.classList.remove('active');
-                this.showHeaderAndSearch();
-            }
-            const plannerModalEl = document.getElementById('plannerModal');
-            if (plannerModalEl && e.target.id === 'plannerModal') {
-                plannerModalEl.classList.remove('active');
-                this.showHeaderAndSearch();
-            }
-            const favoritesModalEl = document.getElementById('favoritesModal');
-            if (favoritesModalEl && e.target.id === 'favoritesModal') {
-                favoritesModalEl.classList.remove('active');
-                this.showHeaderAndSearch();
-            }
-        });
-
-        // Cerrar con Escape
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                this.closeMenu();
-                ['recipeModal','plannerModal','favoritesModal','loginModal','adminPanel'].forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) el.classList.remove('active');
-                });
-                this.showHeaderAndSearch();
-            }
-        });
-
-        // Login / Admin handlers
-        const loginBtn = document.getElementById('loginBtn');
-        if (loginBtn) loginBtn.addEventListener('click', () => this.showLoginModal());
-        
-        const adminPanelBtn = document.getElementById('adminPanelBtn');
-        if (adminPanelBtn) adminPanelBtn.addEventListener('click', () => this.showAdminPanel());
-        
-        const userConfigBtn = document.getElementById('userConfigBtn');
-        if (userConfigBtn) userConfigBtn.addEventListener('click', () => this.showUserProfilePanel());
-        
-        // Nuevas funcionalidades avanzadas
-        const achievementsBtn = document.getElementById('achievementsBtn');
-        if (achievementsBtn) achievementsBtn.addEventListener('click', () => this.showAchievementsModal());
-        
-        const advancedFiltersBtn = document.getElementById('advancedFiltersBtn');
-        if (advancedFiltersBtn) advancedFiltersBtn.addEventListener('click', () => this.showAdvancedFilters());
-        
-        // Toggle admin key input when role changes
-        const roleRadios = document.querySelectorAll('input[name="loginRole"]');
-        const adminKeyWrapper = document.getElementById('adminKeyWrapper');
-        if (roleRadios && adminKeyWrapper) {
-            roleRadios.forEach(r => r.addEventListener('change', (e) => {
-                if (e.target.value === 'admin') adminKeyWrapper.style.display = 'block';
-                else adminKeyWrapper.style.display = 'none';
-            }));
-        }
-        
-        const closeLoginModal = document.getElementById('closeLoginModal');
-        const loginModalEl = document.getElementById('loginModal');
-        if (closeLoginModal && loginModalEl) closeLoginModal.addEventListener('click', () => {
-            loginModalEl.classList.remove('active');
-            this.showHeaderAndSearch();
-        });
-        
-        const loginForm = document.getElementById('loginForm');
-        if (loginForm) loginForm.addEventListener('submit', (e) => { e.preventDefault(); this.login(); });
-        
-        const registerBtn = document.getElementById('registerBtn');
-        if (registerBtn) registerBtn.addEventListener('click', () => this.register());
-
-        const closeAdminPanel = document.getElementById('closeAdminPanel');
-        if (closeAdminPanel) {
-            closeAdminPanel.addEventListener('click', () => this.closeAdminPanel());
-        }
-        
-        const submitAddRecipe = document.getElementById('submitAddRecipe');
-        if (submitAddRecipe) submitAddRecipe.addEventListener('click', () => this.adminAddRecipe());
-        
-        const refreshRecipesBtn = document.getElementById('refreshRecipesBtn');
-        if (refreshRecipesBtn) refreshRecipesBtn.addEventListener('click', () => this.loadAdminLists());
-        
-        const productsLink = document.getElementById('products-link');
-        if (productsLink) productsLink.addEventListener('click', (e) => { e.preventDefault(); this.showProducts(); this.closeMenu(); });
-
-        const recommendationsLink = document.getElementById('recommendations-link');
-        if (recommendationsLink) recommendationsLink.addEventListener('click', (e) => { e.preventDefault(); this.showRecommendations(); this.closeMenu(); });
-
-        const submitAddProduct = document.getElementById('submitAddProduct');
-        if (submitAddProduct) submitAddProduct.addEventListener('click', () => this.adminAddProduct());
-        
-        const refreshProductsBtn = document.getElementById('refreshProductsBtn');
-        if (refreshProductsBtn) refreshProductsBtn.addEventListener('click', () => this.loadAdminLists());
-        
-        const viewUploadsBtn = document.getElementById('viewUploadsBtn');
-        if (viewUploadsBtn) viewUploadsBtn.addEventListener('click', () => this.openAdminUploadsView());
-        
-        // Tab buttons
-        document.querySelectorAll('.admin-tab-btn').forEach(btn => btn.addEventListener('click', (e) => {
-            const tab = e.currentTarget.getAttribute('data-tab');
-            this.switchAdminTab(tab);
-        }));
+        // This duplicate function has been removed to prevent conflicts
+        // All functionality has been merged into the first setupEventListeners function
     }
+    */
 
     /* ========== Productos (usuario) ========== */
     showProducts() {
@@ -3832,16 +3368,12 @@ class RecipesApp {
     }
 
     showHome() {
-        console.log('🏠 === EJECUTANDO showHome() ===');
-        console.log('🏠 this.recipes:', this.recipes);
-        console.log('🏠 this.recipes.length:', this.recipes ? this.recipes.length : 'undefined');
-        
         this.currentCategory = null;
         this.lastSearchQuery = '';
         
         // Verificar que tenemos recetas
         if (!this.recipes || this.recipes.length === 0) {
-            console.warn('⚠️ No hay recetas disponibles en showHome()');
+            console.warn('⚠️ No hay recetas disponibles');
             document.getElementById('sectionTitle').textContent = 'Cargando recetas...';
             const grid = document.getElementById('recipesGrid');
             if (grid) {
@@ -3854,37 +3386,24 @@ class RecipesApp {
             return;
         }
         
-        console.log('🏠 Llamando a getAllRecipesPersonalized()...');
-        
         // Mostrar TODAS las recetas ordenadas por preferencias del usuario
         const allRecipesPersonalized = this.getAllRecipesPersonalized();
-        console.log(`🏠 getAllRecipesPersonalized() devolvió ${allRecipesPersonalized ? allRecipesPersonalized.length : 'null'} recetas`);
-        
-        if (!allRecipesPersonalized || allRecipesPersonalized.length === 0) {
-            console.error('❌ getAllRecipesPersonalized() devolvió vacío');
-            return;
-        }
         
         document.getElementById('sectionTitle').textContent = 'Todas las Recetas - Personalizadas para Ti';
-        
-        console.log('🏠 Llamando a displayRecipes()...');
         this.displayRecipes(allRecipesPersonalized);
-        console.log('🏠 === FIN showHome() ===');
+        
+        console.log(`🏠 Mostrando ${allRecipesPersonalized.length} recetas personalizadas`);
     }
 
     // Nueva función para obtener todas las recetas ordenadas por preferencias
     getAllRecipesPersonalized() {
-        console.log('🎯 === EJECUTANDO getAllRecipesPersonalized() ===');
-        console.log('🎯 this.recipes:', this.recipes);
-        console.log('🎯 this.recipes.length:', this.recipes ? this.recipes.length : 'undefined');
-        
         if (!this.recipes || !Array.isArray(this.recipes)) {
-            console.error('❌ this.recipes no es válido en getAllRecipesPersonalized()');
+            console.error('❌ this.recipes no es válido');
             return [];
         }
         
         if (this.recipes.length === 0) {
-            console.warn('⚠️ this.recipes está vacío en getAllRecipesPersonalized()');
+            console.warn('⚠️ this.recipes está vacío');
             return [];
         }
         
@@ -3895,13 +3414,9 @@ class RecipesApp {
             this.userPreferences.searchHistory.length +
             this.userPreferences.viewHistory.length;
 
-        console.log('🎯 Total preferencias:', totalPreferences);
-
         if (totalPreferences < 3) {
             console.log('🤖 Pocas preferencias, ordenando por calificación');
-            const sorted = [...this.recipes].sort((a, b) => (b.calificacion || 0) - (a.calificacion || 0));
-            console.log('🎯 Devolviendo', sorted.length, 'recetas ordenadas por calificación');
-            return sorted;
+            return [...this.recipes].sort((a, b) => (b.calificacion || 0) - (a.calificacion || 0));
         }
 
         // Calcular puntuaciones para todas las recetas
@@ -3917,7 +3432,6 @@ class RecipesApp {
 
         console.log('🎯 Recetas ordenadas por preferencias del usuario');
         console.log('📊 Top 5 recomendadas:', sortedRecipes.slice(0, 5).map(r => r.nombre));
-        console.log('🎯 Devolviendo', sortedRecipes.length, 'recetas personalizadas');
         
         return sortedRecipes;
     }
@@ -4308,8 +3822,6 @@ class RecipesApp {
     }
 
     displayRecipes(recipes) {
-        console.log('📋 Ejecutando displayRecipes con', recipes ? recipes.length : 0, 'recetas');
-        
         const grid = document.getElementById('recipesGrid');
         
         if (!grid) {
@@ -4318,7 +3830,6 @@ class RecipesApp {
         }
         
         if (!recipes || recipes.length === 0) {
-            console.warn('⚠️ No hay recetas para mostrar');
             grid.innerHTML = `
                 <div class="no-recipes" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
                     <i class="fas fa-search" style="font-size: 48px; color: #6c757d; margin-bottom: 15px;"></i>
@@ -4327,8 +3838,6 @@ class RecipesApp {
             `;
             return;
         }
-
-        console.log('📋 Iniciando renderizado de', recipes.length, 'recetas');
 
         // Limpiar grid inmediatamente para mejor UX
         grid.innerHTML = '<div class="loading-recipes">Cargando recetas...</div>';
@@ -4343,8 +3852,6 @@ class RecipesApp {
         const processBatch = () => {
             const start = currentBatch * batchSize;
             const end = Math.min(start + batchSize, recipes.length);
-            
-            console.log(`📋 Procesando lote ${currentBatch + 1}: recetas ${start + 1}-${end}`);
             
             // Crear contenedor temporal para el lote
             const tempContainer = document.createElement('div');
@@ -4370,7 +3877,6 @@ class RecipesApp {
                 requestAnimationFrame(processBatch);
             } else {
                 // Finalizar: insertar todo en el DOM de una vez
-                console.log('📋 Insertando todas las recetas en el DOM');
                 grid.innerHTML = '';
                 grid.appendChild(fragment);
                 
