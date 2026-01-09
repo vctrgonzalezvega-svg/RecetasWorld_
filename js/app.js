@@ -628,7 +628,7 @@ class RecipesApp {
             fallbackEmoji = '🍽️'
         } = options;
         
-        // Procesar la URL de imagen usando solo rutas locales
+        // Procesar la URL de imagen de manera simple
         let imageUrl = this.processImageUrl(imagePath);
         
         return `
@@ -637,15 +637,16 @@ class RecipesApp {
                 alt="${alt}" 
                 class="${className}"
                 loading="${loading}"
-                ${width ? `width="${width}" height="${height}"` : ''}
-                style="object-fit: cover; ${width && height ? `aspect-ratio: ${width}/${height};` : ''} transition: opacity 0.3s ease;"
-                onerror="this.src='img/default-recipe.svg'; console.warn('Error cargando imagen:', this.src);"
+                ${width ? `width="${width}"` : ''}
+                ${height ? `height="${height}"` : ''}
+                style="object-fit: cover; transition: opacity 0.3s ease;"
+                onerror="this.src='img/default-recipe.svg'"
                 onload="this.style.opacity='1';"
             >
         `;
     }
 
-    // Procesar URL de imagen de manera más robusta
+    // Procesar URL de imagen de manera simple y robusta
     processImageUrl(imagePath) {
         // Si no hay imagen o es inválida, usar imagen por defecto
         if (!imagePath || imagePath === '' || imagePath === 'undefined' || imagePath === 'null') {
@@ -657,7 +658,6 @@ class RecipesApp {
             return imagePath;
         }
         
-        // SIEMPRE usar rutas locales - deshabilitar CDN temporalmente
         // Si ya empieza con img/, usarla tal como está
         if (imagePath.startsWith('img/')) {
             return imagePath;
@@ -5710,84 +5710,75 @@ class RecipesApp {
     }
 
     async login() {
-        const username = document.getElementById('loginUsername').value;
-        const password = document.getElementById('loginPassword').value;
-        try {
-            const res = await this.apiFetch('/api/login', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-            const data = await res.json();
-            if (!data.ok) {
-                // intentar fallback local
-                const localUsers = JSON.parse(localStorage.getItem('localUsers') || '[]');
-                const found = localUsers.find(u => u.username === username && u.password === password);
-                if (found) {
-                    localStorage.setItem('user', JSON.stringify(found));
-                    this.currentUser = found;
-                    this.updateHeaderUI();
-                    const modal = document.getElementById('loginModal'); if (modal) modal.classList.remove('active');
-                    this.showHeaderAndSearch(); // Restaurar header y barra de búsqueda
-                    this.showNotification(`Bienvenido ${found.username} (local)`);
-                    
-                    // Otorgar logro de primer login
-                    this.awardFirstLoginAchievement(found.username);
-                    
-                    if (found.role === 'admin') {
-                        this.showAdminPanel();
-                    } else {
-                        // Mostrar ventana informativa para usuarios normales
-                        this.showUserWelcomeModal();
-                    }
+        const username = document.getElementById('loginUsername')?.value;
+        const password = document.getElementById('loginPassword')?.value;
+        const roleInput = document.querySelector('input[name="loginRole"]:checked');
+        const role = roleInput ? roleInput.value : 'user';
+        const adminKey = document.getElementById('loginAdminKey')?.value;
+
+        if (!username || !password) {
+            this.showNotification('Por favor completa todos los campos', 'error');
+            return;
+        }
+
+        // Validación para administrador
+        if (role === 'admin') {
+            if (!adminKey) {
+                this.showNotification('Se requiere la clave maestra para administradores', 'error');
+                return;
+            }
+            
+            // Verificar clave maestra
+            try {
+                const response = await fetch('data/admin-key.txt');
+                const correctKey = (await response.text()).trim();
+                
+                if (adminKey !== correctKey) {
+                    this.showNotification('Clave maestra incorrecta', 'error');
                     return;
                 }
-                this.showNotification('Credenciales inválidas', 'error');
-                return;
-            }
-            // guardar sesión y actualizar UI con el usuario actual
-            localStorage.setItem('user', JSON.stringify(data.user));
-            this.currentUser = data.user;
-            this.updateHeaderUI();
-            const modal = document.getElementById('loginModal');
-            if (modal) modal.classList.remove('active');
-            this.showHeaderAndSearch(); // Restaurar header y barra de búsqueda
-            this.showNotification(`Bienvenido ${data.user.username}`);
-            
-            // Otorgar logro de primer login
-            this.awardFirstLoginAchievement(data.user.username);
-            
-            if (data.user.role === 'admin') {
-                this.showAdminPanel();
-            } else {
-                // Mostrar ventana informativa para usuarios normales
-                this.showUserWelcomeModal();
-            }
-        } catch (err) {
-            console.error(err);
-            // intentar login local si falla la API
-            const localUsers = JSON.parse(localStorage.getItem('localUsers') || '[]');
-            const found = localUsers.find(u => u.username === username && u.password === password);
-            if (found) {
-                localStorage.setItem('user', JSON.stringify(found));
-                this.currentUser = found;
-                this.updateHeaderUI();
-                const modal = document.getElementById('loginModal'); if (modal) modal.classList.remove('active');
-                this.showHeaderAndSearch(); // Restaurar header y barra de búsqueda
-                this.showNotification(`Bienvenido ${found.username} (local)`);
-                
-                // Otorgar logro de primer login
-                this.awardFirstLoginAchievement(found.username);
-                
-                if (found.role === 'admin') {
-                    this.showAdminPanel();
-                } else {
-                    // Mostrar ventana informativa para usuarios normales
-                    this.showUserWelcomeModal();
+            } catch (error) {
+                console.error('Error verificando clave admin:', error);
+                // Fallback a clave hardcodeada
+                if (adminKey !== 'adminkey123') {
+                    this.showNotification('Clave maestra incorrecta', 'error');
+                    return;
                 }
-                return;
             }
-            this.showNotification('Error de login', 'error');
         }
+
+        // Crear usuario
+        const user = {
+            username: username,
+            role: role,
+            loginTime: new Date().toISOString()
+        };
+
+        // Guardar sesión
+        localStorage.setItem('user', JSON.stringify(user));
+        this.currentUser = user;
+        
+        // Actualizar UI
+        this.updateHeaderUI();
+        
+        // Cerrar modal
+        const modal = document.getElementById('loginModal');
+        if (modal) modal.classList.remove('active');
+        
+        // Mostrar notificación
+        this.showNotification(`Bienvenido ${username}!`);
+        
+        // Otorgar logro de primer login
+        this.awardFirstLoginAchievement(username);
+        
+        // Mostrar panel correspondiente
+        if (role === 'admin') {
+            setTimeout(() => this.showAdminPanel(), 500);
+        } else {
+            this.showUserWelcomeModal();
+        }
+        
+        console.log(`✅ Login exitoso: ${username} (${role})`);
     }
 
     async register() {
