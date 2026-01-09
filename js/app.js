@@ -317,6 +317,160 @@ class RecipesApp {
         }
     }
 
+    // ========== FUNCIONES PARA MANEJO DE INGREDIENTES E IMÁGENES ==========
+    
+    // Función para detectar iconos automáticamente basado en palabras clave
+    detectIngredientIcon(ingredientName) {
+        const iconMap = {
+            // Cereales y granos
+            'harina': '🌾', 'trigo': '🌾', 'avena': '🌾', 'quinoa': '🌾',
+            'arroz': '🍚', 'pasta': '🍝', 'espagueti': '🍝', 'macarrones': '🍝',
+            'maíz': '🌽', 'elote': '🌽', 'tortilla': '🌮',
+            
+            // Proteínas
+            'pollo': '🍗', 'pechuga': '🍗', 'muslo': '🍗',
+            'carne': '🥩', 'res': '🥩', 'ternera': '🥩', 'cerdo': '🥩',
+            'pescado': '🐟', 'salmón': '🐟', 'atún': '🐟', 'bacalao': '🐟',
+            'huevo': '🥚', 'huevos': '🥚',
+            'jamón': '🥓', 'tocino': '🥓', 'panceta': '🥓', 'chorizo': '🥓',
+            
+            // Lácteos
+            'leche': '🥛', 'yogurt': '🥛', 'crema': '🥛',
+            'queso': '🧀', 'mozzarella': '🧀', 'parmesano': '🧀', 'cheddar': '🧀',
+            'mantequilla': '🧈', 'margarina': '🧈',
+            
+            // Vegetales
+            'tomate': '🍅', 'jitomate': '🍅', 'cherry': '🍅',
+            'cebolla': '🧅', 'morada': '🧅', 'blanca': '🧅',
+            'ajo': '🧄', 'diente': '🧄',
+            'papa': '🥔', 'patata': '🥔',
+            'zanahoria': '🥕', 'apio': '🥬', 'lechuga': '🥬',
+            'pimiento': '🫑', 'chile': '🌶️', 'jalapeño': '🌶️', 'chipotle': '🌶️',
+            'aguacate': '🥑', 'palta': '🥑',
+            'brócoli': '🥦', 'coliflor': '🥦',
+            'espinaca': '🥬', 'acelga': '🥬',
+            
+            // Frutas
+            'plátano': '🍌', 'banana': '🍌',
+            'manzana': '🍎', 'pera': '🍐',
+            'naranja': '🍊', 'limón': '🍋', 'lima': '🍋',
+            'fresa': '🍓', 'frambuesa': '🍓',
+            'arándano': '🫐', 'mora': '🫐',
+            'piña': '🍍', 'ananá': '🍍',
+            'uva': '🍇', 'pasa': '🍇',
+            'coco': '🥥', 'rallado': '🥥',
+            
+            // Legumbres
+            'frijol': '🫘', 'alubia': '🫘', 'garbanzo': '🫘',
+            'lenteja': '🫘', 'chícharo': '🟢', 'guisante': '🟢',
+            
+            // Condimentos y especias
+            'sal': '🧂', 'pimienta': '⚫', 'negra': '⚫',
+            'azúcar': '🍬', 'morena': '🍯', 'miel': '🍯',
+            'aceite': '🛢️', 'oliva': '🫒', 'vegetal': '🛢️',
+            'vinagre': '🍶', 'vino': '🍷',
+            'canela': '🟤', 'vainilla': '🌸',
+            'cilantro': '🌿', 'perejil': '🌿', 'hierbabuena': '🌿',
+            'orégano': '🌿', 'tomillo': '🌿', 'romero': '🌿',
+            
+            // Frutos secos
+            'nuez': '🥜', 'almendra': '🥜', 'cacahuate': '🥜',
+            'pistacho': '🥜', 'avellana': '🥜',
+            
+            // Bebidas
+            'agua': '💧', 'caldo': '🥣', 'consomé': '🥣',
+            'café': '☕', 'té': '🍵',
+            'cerveza': '🍺', 'vino': '🍷', 'ron': '🥃', 'tequila': '🥃',
+            
+            // Otros
+            'pan': '🍞', 'bolillo': '🍞', 'baguette': '🍞',
+            'hielo': '🧊', 'cubito': '🧊',
+            'chocolate': '🍫', 'cacao': '🍫',
+            'granola': '🥣', 'cereal': '🥣'
+        };
+
+        const name = ingredientName.toLowerCase();
+        
+        // Buscar coincidencia exacta o parcial
+        for (const [keyword, icon] of Object.entries(iconMap)) {
+            if (name.includes(keyword)) {
+                return icon;
+            }
+        }
+        
+        // Icono por defecto si no se encuentra coincidencia
+        return '🥄';
+    }
+
+    // Función para procesar ingredientes y agregar iconos automáticamente
+    processIngredients(ingredientsList) {
+        return ingredientsList.map(ingredient => {
+            if (typeof ingredient === 'string') {
+                // Si es string, convertir a objeto con icono automático
+                return {
+                    nombre: ingredient,
+                    cantidad: '',
+                    icono: this.detectIngredientIcon(ingredient)
+                };
+            } else if (typeof ingredient === 'object') {
+                // Si es objeto, asegurar que tenga icono y mantener cantidad
+                return {
+                    nombre: ingredient.nombre || ingredient,
+                    cantidad: ingredient.cantidad || '',
+                    icono: ingredient.icono || this.detectIngredientIcon(ingredient.nombre || ingredient)
+                };
+            }
+            return ingredient;
+        });
+    }
+
+    // Función para sincronizar imagen con recipes.json
+    async syncImageWithRecipesJson(recipeId, newImagePath) {
+        try {
+            // Leer recipes.json
+            const response = await fetch('/data/recipes.json');
+            const data = await response.json();
+            
+            // Buscar la receta y actualizar la imagen
+            const recipe = data.recetas.find(r => r.id == recipeId);
+            if (recipe) {
+                recipe.imagen = newImagePath;
+                
+                // Aquí normalmente enviarías de vuelta al servidor para guardar
+                // Por ahora solo actualizamos localmente
+                console.log(`✅ Imagen sincronizada en recipes.json para receta ${recipeId}: ${newImagePath}`);
+            }
+        } catch (error) {
+            console.warn('⚠️ No se pudo sincronizar con recipes.json:', error);
+        }
+    }
+
+    // Función para mostrar vista previa de ingredientes con iconos
+    showIngredientsPreview(ingredientsList, containerId) {
+        const container = document.getElementById(containerId);
+        if (!container || !Array.isArray(ingredientsList)) return;
+
+        const processedIngredients = this.processIngredients(ingredientsList);
+        
+        container.innerHTML = `
+            <div class="ingredients-preview">
+                <h4>Vista previa de ingredientes:</h4>
+                <div class="ingredients-grid">
+                    ${processedIngredients.map(ing => `
+                        <div class="ingredient-item">
+                            <span class="ingredient-icon">${ing.icono}</span>
+                            <div class="ingredient-info">
+                                <span class="ingredient-name">${ing.nombre}</span>
+                                ${ing.cantidad ? `<span class="ingredient-quantity">${ing.cantidad}</span>` : ''}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                <small>Los iconos se asignan automáticamente según el nombre del ingrediente</small>
+            </div>
+        `;
+    }
+
     saveProducts() { localStorage.setItem('products', JSON.stringify(this.products)); }
 
     // ========== VALIDACIÓN DE IMÁGENES MEJORADA ==========
@@ -2949,20 +3103,433 @@ class RecipesApp {
     purchaseProduct(productId) {
         const user = this.currentUser;
         if (!user) return this.showNotification('Inicia sesión para canjear productos', 'error');
+        
         const product = this.products.find(p => p.id === productId);
         if (!product) return this.showNotification('Producto no encontrado', 'error');
         if (product.stock <= 0) return this.showNotification('Producto agotado', 'error');
+        
         const username = user.username;
         const balance = this.userPoints[username] || 0;
         if (balance < product.points) return this.showNotification('No tienes suficientes puntos', 'error');
-        // deduct points using centralized function
-        const pointsToDeduct = -product.points; // Negative to deduct
+        
+        // Verificar si el usuario tiene dirección guardada
+        const userAddresses = JSON.parse(localStorage.getItem('userAddresses')) || {};
+        const userAddress = userAddresses[username];
+        
+        if (!userAddress) {
+            // Primera vez canjeando - mostrar formulario de dirección
+            this.showAddressForm(productId);
+            return;
+        }
+        
+        // Usuario ya tiene dirección - proceder con el canje
+        this.completePurchase(productId);
+    }
+
+    // Mostrar formulario de dirección domiciliaria
+    showAddressForm(productId) {
+        const product = this.products.find(p => p.id === productId);
+        
+        const html = `
+            <div class="address-form-container">
+                <div class="address-form-header">
+                    <h3><i class="fas fa-map-marker-alt"></i> Dirección de Envío</h3>
+                    <p>Para completar tu canje de <strong>${product.name}</strong>, necesitamos tu dirección de envío.</p>
+                </div>
+                
+                <form id="addressForm" class="address-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="fullName"><i class="fas fa-user"></i> Nombre Completo *</label>
+                            <input type="text" id="fullName" name="fullName" required placeholder="Tu nombre completo">
+                        </div>
+                        <div class="form-group">
+                            <label for="phone"><i class="fas fa-phone"></i> Teléfono *</label>
+                            <input type="tel" id="phone" name="phone" required placeholder="Número de teléfono">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="address"><i class="fas fa-home"></i> Dirección *</label>
+                        <input type="text" id="address" name="address" required placeholder="Calle, número, colonia">
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="city"><i class="fas fa-city"></i> Ciudad *</label>
+                            <input type="text" id="city" name="city" required placeholder="Ciudad">
+                        </div>
+                        <div class="form-group">
+                            <label for="state"><i class="fas fa-map"></i> Estado/Provincia *</label>
+                            <input type="text" id="state" name="state" required placeholder="Estado o provincia">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="postalCode"><i class="fas fa-mail-bulk"></i> Código Postal *</label>
+                            <input type="text" id="postalCode" name="postalCode" required placeholder="Código postal">
+                        </div>
+                        <div class="form-group">
+                            <label for="country"><i class="fas fa-globe"></i> País *</label>
+                            <input type="text" id="country" name="country" required placeholder="País" value="México">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="additionalInfo"><i class="fas fa-info-circle"></i> Información Adicional</label>
+                        <textarea id="additionalInfo" name="additionalInfo" placeholder="Referencias, entre calles, etc. (opcional)" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="app.closeModal()">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-check"></i> Guardar y Canjear
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="address-form-footer">
+                    <p><i class="fas fa-shield-alt"></i> Tu información está segura y solo se usa para envíos.</p>
+                </div>
+            </div>
+        `;
+        
+        // Mostrar en modal
+        const modalBodyEl = document.getElementById('modalBody');
+        if (modalBodyEl) modalBodyEl.innerHTML = html;
+        
+        const recipeModalEl = document.getElementById('recipeModal');
+        if (recipeModalEl) recipeModalEl.classList.add('active');
+        
+        // Configurar event listener para el formulario
+        setTimeout(() => {
+            const form = document.getElementById('addressForm');
+            if (form) {
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.saveAddressAndCompletePurchase(productId);
+                });
+            }
+        }, 100);
+    }
+
+    // Guardar dirección y completar compra
+    saveAddressAndCompletePurchase(productId) {
+        const form = document.getElementById('addressForm');
+        const formData = new FormData(form);
+        
+        // Validar campos requeridos
+        const requiredFields = ['fullName', 'phone', 'address', 'city', 'state', 'postalCode', 'country'];
+        for (const field of requiredFields) {
+            if (!formData.get(field)?.trim()) {
+                this.showNotification(`El campo ${this.getFieldDisplayName(field)} es requerido`, 'error');
+                return;
+            }
+        }
+        
+        // Crear objeto de dirección
+        const addressData = {
+            fullName: formData.get('fullName').trim(),
+            phone: formData.get('phone').trim(),
+            address: formData.get('address').trim(),
+            city: formData.get('city').trim(),
+            state: formData.get('state').trim(),
+            postalCode: formData.get('postalCode').trim(),
+            country: formData.get('country').trim(),
+            additionalInfo: formData.get('additionalInfo')?.trim() || '',
+            createdAt: Date.now(),
+            updatedAt: Date.now()
+        };
+        
+        // Guardar dirección del usuario
+        const userAddresses = JSON.parse(localStorage.getItem('userAddresses')) || {};
+        userAddresses[this.currentUser.username] = addressData;
+        localStorage.setItem('userAddresses', JSON.stringify(userAddresses));
+        
+        this.showNotification('Dirección guardada correctamente', 'success');
+        
+        // Completar la compra
+        this.completePurchase(productId);
+    }
+
+    // Completar la compra (función separada)
+    completePurchase(productId) {
+        const product = this.products.find(p => p.id === productId);
+        const username = this.currentUser.username;
+        
+        // Deducir puntos
+        const pointsToDeduct = -product.points;
         this.awardPoints(username, pointsToDeduct, `canje de ${product.name}`);
         
+        // Reducir stock
         product.stock = Math.max(0, product.stock - 1);
         this.saveProducts();
-        this.showNotification(`Has canjeado ${product.name} por ${product.points} pts`);
-        this.showProducts();
+        
+        // Registrar canje
+        const userRedemptions = JSON.parse(localStorage.getItem('userRedemptions')) || {};
+        if (!userRedemptions[username]) userRedemptions[username] = [];
+        
+        userRedemptions[username].push({
+            productId: product.id,
+            productName: product.name,
+            pointsUsed: product.points,
+            redeemedAt: Date.now(),
+            status: 'processing' // processing, shipped, delivered
+        });
+        
+        localStorage.setItem('userRedemptions', JSON.stringify(userRedemptions));
+        
+        this.showNotification(`¡Has canjeado ${product.name} por ${product.points} pts! Se enviará a tu dirección registrada.`, 'success');
+        this.closeModal();
+        this.showProducts(); // Actualizar vista de productos
+    }
+
+    // Obtener nombre de campo para mostrar
+    getFieldDisplayName(fieldName) {
+        const fieldNames = {
+            fullName: 'Nombre Completo',
+            phone: 'Teléfono',
+            address: 'Dirección',
+            city: 'Ciudad',
+            state: 'Estado/Provincia',
+            postalCode: 'Código Postal',
+            country: 'País'
+        };
+        return fieldNames[fieldName] || fieldName;
+    }
+
+    // Renderizar pestaña de dirección
+    renderAddressTab(username) {
+        const userAddresses = JSON.parse(localStorage.getItem('userAddresses')) || {};
+        const userAddress = userAddresses[username];
+        const userRedemptions = JSON.parse(localStorage.getItem('userRedemptions')) || {};
+        const userRedemptionsList = userRedemptions[username] || [];
+
+        if (!userAddress) {
+            return `
+                <div class="address-section">
+                    <h4><i class="fas fa-map-marker-alt"></i> Dirección de Envío</h4>
+                    <div class="empty-address">
+                        <div class="empty-address-icon">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <h5>No tienes una dirección registrada</h5>
+                        <p>Cuando canjees tu primer producto, te pediremos que registres tu dirección de envío.</p>
+                        <button class="btn-primary" onclick="app.showProducts()">
+                            <i class="fas fa-gift"></i> Ver Productos Disponibles
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="address-section">
+                <h4><i class="fas fa-map-marker-alt"></i> Mi Dirección de Envío</h4>
+                
+                <div class="address-card">
+                    <div class="address-header">
+                        <h5><i class="fas fa-home"></i> Dirección Registrada</h5>
+                        <button class="btn-secondary btn-small" onclick="app.editUserAddress()">
+                            <i class="fas fa-edit"></i> Editar
+                        </button>
+                    </div>
+                    
+                    <div class="address-details">
+                        <div class="address-field">
+                            <strong><i class="fas fa-user"></i> ${userAddress.fullName}</strong>
+                        </div>
+                        <div class="address-field">
+                            <i class="fas fa-phone"></i> ${userAddress.phone}
+                        </div>
+                        <div class="address-field">
+                            <i class="fas fa-home"></i> ${userAddress.address}
+                        </div>
+                        <div class="address-field">
+                            <i class="fas fa-city"></i> ${userAddress.city}, ${userAddress.state}
+                        </div>
+                        <div class="address-field">
+                            <i class="fas fa-mail-bulk"></i> ${userAddress.postalCode}, ${userAddress.country}
+                        </div>
+                        ${userAddress.additionalInfo ? `
+                            <div class="address-field">
+                                <i class="fas fa-info-circle"></i> ${userAddress.additionalInfo}
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="address-footer">
+                        <small><i class="fas fa-clock"></i> Registrada el ${new Date(userAddress.createdAt).toLocaleDateString()}</small>
+                    </div>
+                </div>
+
+                ${userRedemptionsList.length > 0 ? `
+                    <div class="redemptions-section">
+                        <h5><i class="fas fa-shipping-fast"></i> Historial de Canjes</h5>
+                        <div class="redemptions-list">
+                            ${userRedemptionsList.slice(-5).reverse().map(redemption => `
+                                <div class="redemption-item">
+                                    <div class="redemption-info">
+                                        <h6>${redemption.productName}</h6>
+                                        <p>${redemption.pointsUsed} puntos • ${new Date(redemption.redeemedAt).toLocaleDateString()}</p>
+                                    </div>
+                                    <div class="redemption-status">
+                                        <span class="status-badge status-${redemption.status}">
+                                            ${this.getRedemptionStatusText(redemption.status)}
+                                        </span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        ${userRedemptionsList.length > 5 ? `
+                            <button class="btn-secondary btn-small" onclick="app.showAllRedemptions()">
+                                <i class="fas fa-list"></i> Ver Todos (${userRedemptionsList.length})
+                            </button>
+                        ` : ''}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }
+
+    // Obtener texto del estado de canje
+    getRedemptionStatusText(status) {
+        const statusTexts = {
+            processing: 'Procesando',
+            shipped: 'Enviado',
+            delivered: 'Entregado'
+        };
+        return statusTexts[status] || 'Desconocido';
+    }
+
+    // Editar dirección del usuario
+    editUserAddress() {
+        const username = this.currentUser.username;
+        const userAddresses = JSON.parse(localStorage.getItem('userAddresses')) || {};
+        const userAddress = userAddresses[username];
+
+        if (!userAddress) {
+            this.showNotification('No tienes una dirección registrada', 'error');
+            return;
+        }
+
+        const html = `
+            <div class="address-form-container">
+                <div class="address-form-header">
+                    <h3><i class="fas fa-edit"></i> Editar Dirección de Envío</h3>
+                    <p>Actualiza tu información de envío para futuros canjes.</p>
+                </div>
+                
+                <form id="editAddressForm" class="address-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editFullName"><i class="fas fa-user"></i> Nombre Completo *</label>
+                            <input type="text" id="editFullName" name="fullName" required value="${userAddress.fullName}">
+                        </div>
+                        <div class="form-group">
+                            <label for="editPhone"><i class="fas fa-phone"></i> Teléfono *</label>
+                            <input type="tel" id="editPhone" name="phone" required value="${userAddress.phone}">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editAddress"><i class="fas fa-home"></i> Dirección *</label>
+                        <input type="text" id="editAddress" name="address" required value="${userAddress.address}">
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editCity"><i class="fas fa-city"></i> Ciudad *</label>
+                            <input type="text" id="editCity" name="city" required value="${userAddress.city}">
+                        </div>
+                        <div class="form-group">
+                            <label for="editState"><i class="fas fa-map"></i> Estado/Provincia *</label>
+                            <input type="text" id="editState" name="state" required value="${userAddress.state}">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editPostalCode"><i class="fas fa-mail-bulk"></i> Código Postal *</label>
+                            <input type="text" id="editPostalCode" name="postalCode" required value="${userAddress.postalCode}">
+                        </div>
+                        <div class="form-group">
+                            <label for="editCountry"><i class="fas fa-globe"></i> País *</label>
+                            <input type="text" id="editCountry" name="country" required value="${userAddress.country}">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editAdditionalInfo"><i class="fas fa-info-circle"></i> Información Adicional</label>
+                        <textarea id="editAdditionalInfo" name="additionalInfo" rows="3">${userAddress.additionalInfo || ''}</textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="app.showUserProfilePanel()">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-save"></i> Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        `;
+
+        // Mostrar en modal
+        const modalBodyEl = document.getElementById('modalBody');
+        if (modalBodyEl) modalBodyEl.innerHTML = html;
+
+        // Configurar event listener
+        setTimeout(() => {
+            const form = document.getElementById('editAddressForm');
+            if (form) {
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.updateUserAddress();
+                });
+            }
+        }, 100);
+    }
+
+    // Actualizar dirección del usuario
+    updateUserAddress() {
+        const form = document.getElementById('editAddressForm');
+        const formData = new FormData(form);
+        
+        // Validar campos requeridos
+        const requiredFields = ['fullName', 'phone', 'address', 'city', 'state', 'postalCode', 'country'];
+        for (const field of requiredFields) {
+            if (!formData.get(field)?.trim()) {
+                this.showNotification(`El campo ${this.getFieldDisplayName(field)} es requerido`, 'error');
+                return;
+            }
+        }
+        
+        const username = this.currentUser.username;
+        const userAddresses = JSON.parse(localStorage.getItem('userAddresses')) || {};
+        
+        // Actualizar dirección
+        userAddresses[username] = {
+            ...userAddresses[username],
+            fullName: formData.get('fullName').trim(),
+            phone: formData.get('phone').trim(),
+            address: formData.get('address').trim(),
+            city: formData.get('city').trim(),
+            state: formData.get('state').trim(),
+            postalCode: formData.get('postalCode').trim(),
+            country: formData.get('country').trim(),
+            additionalInfo: formData.get('additionalInfo')?.trim() || '',
+            updatedAt: Date.now()
+        };
+        
+        localStorage.setItem('userAddresses', JSON.stringify(userAddresses));
+        
+        this.showNotification('Dirección actualizada correctamente', 'success');
+        this.showUserProfilePanel(); // Volver al panel
     }
 
     toggleMenu() {
@@ -4173,8 +4740,10 @@ class RecipesApp {
             .slice(0, 3)
             .map(([category, count]) => ({ category, count }));
 
-        // Productos canjeados (simulado)
-        const redeemedProducts = 0; // Por ahora 0, se puede implementar después
+        // Productos canjeados (calculado desde userRedemptions)
+        const userRedemptions = JSON.parse(localStorage.getItem('userRedemptions')) || {};
+        const userRedemptionsList = userRedemptions[username] || [];
+        const redeemedProducts = userRedemptionsList.length;
 
         // Título específico según el rol
         const panelTitle = this.currentUser.role === 'admin' ? 
@@ -4201,6 +4770,9 @@ class RecipesApp {
                     </button>
                     <button class="profile-tab-btn" data-tab="stats">
                         <i class="fas fa-chart-bar"></i> Estadísticas
+                    </button>
+                    <button class="profile-tab-btn" data-tab="address">
+                        <i class="fas fa-map-marker-alt"></i> Mi Dirección
                     </button>
                     <button class="profile-tab-btn" data-tab="account">
                         <i class="fas fa-user"></i> Mi Cuenta
@@ -4347,6 +4919,11 @@ class RecipesApp {
                                 </div>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Tab: Mi Dirección -->
+                    <div class="profile-tab-panel" id="profile-tab-address">
+                        ${this.renderAddressTab(username)}
                     </div>
 
                     <!-- Tab: Mi Cuenta -->
@@ -6653,12 +7230,23 @@ class RecipesApp {
             editTitle.textContent = `Editando: ${recipe.nombre}`;
         }
         
-        // Llenar ingredientes
+        // Llenar ingredientes preservando cantidades e iconos
         if (recipe.ingredientes && Array.isArray(recipe.ingredientes)) {
-            const ingredientesText = recipe.ingredientes.map(ing => 
-                typeof ing === 'string' ? ing : ing.nombre || ing
-            ).join('\n');
-            document.getElementById('edit_ingredientes').value = ingredientesText;
+            // Si los ingredientes tienen estructura completa (nombre, cantidad, icono)
+            const hasCompleteStructure = recipe.ingredientes.some(ing => 
+                typeof ing === 'object' && ing.cantidad && ing.icono
+            );
+            
+            if (hasCompleteStructure) {
+                // Preservar estructura JSON completa para mantener cantidades e iconos
+                document.getElementById('edit_ingredientes').value = JSON.stringify(recipe.ingredientes, null, 2);
+            } else {
+                // Convertir a texto simple si no hay estructura completa
+                const ingredientesText = recipe.ingredientes.map(ing => 
+                    typeof ing === 'string' ? ing : ing.nombre || ing
+                ).join('\n');
+                document.getElementById('edit_ingredientes').value = ingredientesText;
+            }
         }
         
         // Llenar instrucciones
@@ -6760,10 +7348,13 @@ class RecipesApp {
         try {
             const parsed = JSON.parse(ingredientesRaw);
             if (Array.isArray(parsed)) {
-                ingredientes = parsed.map(item => (typeof item === 'string') ? { nombre: item, cantidad: '', icono: '' } : item);
+                // Procesar ingredientes manteniendo cantidades e iconos
+                ingredientes = this.processIngredients(parsed);
             } else ingredientes = [];
         } catch {
-            ingredientes = ingredientesRaw.split(/\r?\n/).map(l => l.trim()).filter(Boolean).map(l => ({ nombre: l, cantidad: '', icono: '' }));
+            // Si no es JSON, procesar como texto plano
+            const ingredientesTexto = ingredientesRaw.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+            ingredientes = this.processIngredients(ingredientesTexto);
         }
 
         try {
@@ -6851,6 +7442,9 @@ class RecipesApp {
             if (imageBase64) {
                 rec.imagen = imageBase64;
                 console.log('📷 Imagen actualizada localmente');
+                
+                // Sincronizar con recipes.json
+                this.syncImageWithRecipesJson(rec.id, imageBase64);
             }
             
             this.recipes[idx] = rec;
@@ -6902,6 +7496,11 @@ class RecipesApp {
                         if (idx !== -1) {
                             this.recipes[idx] = updated;
                             console.log('📷 Imagen actualizada:', updated.imagen);
+                            
+                            // Sincronizar con recipes.json si hay nueva imagen
+                            if (updated.imagen) {
+                                this.syncImageWithRecipesJson(updated.id, updated.imagen);
+                            }
                         }
                     }
                     
@@ -7193,12 +7792,13 @@ class RecipesApp {
             try {
                 const parsed = JSON.parse(ingredientesRaw);
                 if (Array.isArray(parsed)) {
-                    // Si vienen objetos o strings, normalizar a objetos
-                    ingredientes = parsed.map(item => (typeof item === 'string') ? { nombre: item, cantidad: '', icono: '' } : item);
+                    // Procesar ingredientes manteniendo cantidades e iconos
+                    ingredientes = this.processIngredients(parsed);
                 } else ingredientes = [];
             } catch {
                 // No es JSON: tratar cada línea como ingrediente
-                ingredientes = ingredientesRaw.split(/\r?\n/).map(l => l.trim()).filter(Boolean).map(l => ({ nombre: l, cantidad: '', icono: '' }));
+                const ingredientesTexto = ingredientesRaw.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+                ingredientes = this.processIngredients(ingredientesTexto);
             }
 
             try {
