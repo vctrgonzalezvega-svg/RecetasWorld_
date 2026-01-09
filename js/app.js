@@ -3488,12 +3488,7 @@ class RecipesApp {
     }
 
     showHome() {
-        console.log('🏠 showHome() llamado');
-        console.log('📊 Estado de recetas:', {
-            recipes: this.recipes,
-            length: this.recipes ? this.recipes.length : 'undefined',
-            isArray: Array.isArray(this.recipes)
-        });
+        console.log('🏠 showHome() - Recetas disponibles:', this.recipes ? this.recipes.length : 0);
         
         this.currentCategory = null;
         this.lastSearchQuery = '';
@@ -3514,13 +3509,9 @@ class RecipesApp {
         }
         
         // Mostrar TODAS las recetas ordenadas por preferencias del usuario
-        console.log('🎯 Obteniendo recetas personalizadas...');
         const allRecipesPersonalized = this.getAllRecipesPersonalized();
-        console.log('📋 Recetas personalizadas obtenidas:', allRecipesPersonalized.length);
         
         document.getElementById('sectionTitle').textContent = 'Todas las Recetas - Personalizadas para Ti';
-        
-        console.log('🖼️ Llamando displayRecipes...');
         this.displayRecipes(allRecipesPersonalized);
         
         console.log(`🏠 Mostrando ${allRecipesPersonalized.length} recetas personalizadas`);
@@ -3962,8 +3953,6 @@ class RecipesApp {
             return;
         }
         
-        console.log('✅ Grid element encontrado:', grid);
-        
         if (!recipes || recipes.length === 0) {
             console.log('⚠️ No hay recetas para mostrar');
             grid.innerHTML = `
@@ -3991,11 +3980,6 @@ class RecipesApp {
             const start = currentBatch * batchSize;
             const end = Math.min(start + batchSize, recipes.length);
             
-            console.log(`📦 Procesando lote ${currentBatch + 1}: recetas ${start + 1}-${end}`);
-            
-            // Crear contenedor temporal para el lote
-            const tempContainer = document.createElement('div');
-            
             for (let i = start; i < end; i++) {
                 const recipe = recipes[i];
                 
@@ -4004,15 +3988,12 @@ class RecipesApp {
                     recipe.id = Date.now() + Math.random();
                 }
                 
-                console.log(`🍽️ Creando tarjeta para: ${recipe.nombre} (ID: ${recipe.id})`);
-                
                 try {
                     // Crear elemento de receta
                     const recipeElement = document.createElement('div');
                     const cardHtml = this.createRecipeCard(recipe);
                     recipeElement.innerHTML = cardHtml;
                     fragment.appendChild(recipeElement.firstChild);
-                    console.log(`✅ Tarjeta creada para: ${recipe.nombre}`);
                 } catch (error) {
                     console.error(`❌ Error creando tarjeta para ${recipe.nombre}:`, error);
                 }
@@ -4025,11 +4006,8 @@ class RecipesApp {
                 requestAnimationFrame(processBatch);
             } else {
                 // Finalizar: insertar todo en el DOM de una vez
-                console.log('🎯 Insertando todas las tarjetas en el DOM...');
                 grid.innerHTML = '';
                 grid.appendChild(fragment);
-                
-                console.log('✅ Tarjetas insertadas. Configurando event listeners...');
                 
                 // Configurar event listeners después de insertar
                 this.setupRecipeEventListeners();
@@ -4037,7 +4015,7 @@ class RecipesApp {
                 // Inicializar lazy loading para las nuevas imágenes
                 this.initializeLazyLoading();
                 
-                console.log(`✅ ${recipes.length} recetas mostradas en ${currentBatch} lotes`);
+                console.log(`✅ ${recipes.length} recetas mostradas correctamente`);
             }
         };
         
