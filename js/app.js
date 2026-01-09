@@ -70,6 +70,9 @@ class RecipesApp {
         // ========== INICIALIZAR CDN ==========
         this.initializeCDN();
         
+        // ========== FUNCIONES GLOBALES PARA MANEJO DE IMÁGENES ==========
+        this.setupGlobalImageHandlers();
+        
         // Comandos de consola para controlar bots (solo en desarrollo)
         if (typeof window !== 'undefined') {
             window.regenerateBotRatings = () => this.regenerateAllBotRatings();
@@ -643,6 +646,7 @@ class RecipesApp {
     }
     
     // Crear elemento img con lazy loading y fallback mejorado
+    // Crear elemento img optimizado y simple
     createOptimizedImage(imagePath, alt = '', options = {}) {
         const {
             width,
@@ -652,29 +656,110 @@ class RecipesApp {
             fallbackEmoji = '🍽️'
         } = options;
         
-        const optimizedUrl = this.getOptimizedImageUrl(imagePath, { width, height });
-        const fallbackUrl = this.getDefaultImageUrl();
-        
-        // Detectar formato de imagen para compatibilidad
-        const imageFormat = this.detectImageFormat(imagePath);
-        const needsFallback = this.needsFormatFallback(imageFormat);
+        // Procesar la URL de imagen de manera más robusta
+        let imageUrl = this.processImageUrl(imagePath);
         
         return `
             <img 
-                src="${optimizedUrl}" 
+                src="${imageUrl}" 
                 alt="${alt}" 
                 class="${className}"
                 loading="${loading}"
-                ${width ? `width="${width}"` : ''}
-                ${height ? `height="${height}"` : ''}
-                onerror="this.onerror=null; ${needsFallback ? `this.src='${this.convertToCompatibleFormat(optimizedUrl)}'; if(this.src.includes('converted') && this.complete && this.naturalWidth === 0) {` : ''} this.src='${fallbackUrl}'; if(!this.src || this.src==='${fallbackUrl}') { this.style.display='none'; this.nextElementSibling.style.display='flex'; } ${needsFallback ? '}' : ''}"
-                data-original-format="${imageFormat}"
-                data-needs-fallback="${needsFallback}"
+                ${width ? `width="${width}" height="${height}"` : ''}
+                style="object-fit: cover; ${width && height ? `aspect-ratio: ${width}/${height};` : ''} transition: opacity 0.3s ease;"
+                onerror="window.app?.handleImageError?.(this, '${fallbackEmoji}') || this.handleImageErrorFallback('${fallbackEmoji}')"
+                onload="window.app?.handleImageLoad?.(this) || this.handleImageLoadFallback()"
             >
-            <div class="recipe-emoji-fallback" style="display:none; font-size: 4rem; color: var(--primary); justify-content: center; align-items: center; min-height: 200px;">
+            <div class="recipe-emoji-fallback" style="display:none; font-size: 4rem; color: var(--primary); justify-content: center; align-items: center; min-height: ${height || 200}px; background: #f8f9fa; border-radius: 8px;">
                 ${fallbackEmoji}
             </div>
         `;
+    }
+
+    // Procesar URL de imagen de manera más robusta
+    processImageUrl(imagePath) {
+        // Si no hay imagen o es inválida, usar imagen por defecto
+        if (!imagePath || imagePath === '' || imagePath === 'undefined' || imagePath === 'null') {
+            return 'img/default-recipe.svg';
+        }
+        
+        // Si ya es una URL completa, usarla tal como está
+        if (imagePath.startsWith('http') || imagePath.startsWith('data:')) {
+            return imagePath;
+        }
+        
+        // Si ya empieza con img/, usarla tal como está
+        if (imagePath.startsWith('img/')) {
+            return imagePath;
+        }
+        
+        // Si es solo el nombre del archivo, agregar el prefijo img/
+        return `img/${imagePath}`;
+    }
+
+    // Manejar errores de carga de imagen
+    handleImageError(img, fallbackEmoji) {
+        console.warn('⚠️ Error cargando imagen:', img.src);
+        
+        // Intentar con imagen por defecto si no es ya la imagen por defecto
+        if (!img.src.includes('default-recipe.svg')) {
+            img.src = 'img/default-recipe.svg';
+            return;
+        }
+        
+        // Si la imagen por defecto también falla, mostrar emoji
+        img.style.display = 'none';
+        const fallback = img.nextElementSibling;
+        if (fallback && fallback.classList.contains('recipe-emoji-fallback')) {
+            fallback.style.display = 'flex';
+            fallback.textContent = fallbackEmoji;
+        }
+    }
+
+    // Manejar carga exitosa de imagen
+    handleImageLoad(img) {
+        // Agregar clase para animación de aparición
+        img.classList.add('image-loaded');
+        img.style.opacity = '1';
+        
+        // Ocultar fallback si estaba visible
+        const fallback = img.nextElementSibling;
+        if (fallback && fallback.classList.contains('recipe-emoji-fallback')) {
+            fallback.style.display = 'none';
+        }
+    }
+
+    // Configurar manejadores globales de imágenes
+    setupGlobalImageHandlers() {
+        // Funciones globales para manejo de errores de imagen
+        window.handleImageErrorFallback = function(fallbackEmoji) {
+            console.warn('⚠️ Error cargando imagen (fallback):', this.src);
+            
+            if (!this.src.includes('default-recipe.svg')) {
+                this.src = 'img/default-recipe.svg';
+                return;
+            }
+            
+            this.style.display = 'none';
+            const fallback = this.nextElementSibling;
+            if (fallback && fallback.classList.contains('recipe-emoji-fallback')) {
+                fallback.style.display = 'flex';
+                fallback.textContent = fallbackEmoji;
+            }
+        };
+
+        window.handleImageLoadFallback = function() {
+            this.classList.add('image-loaded');
+            this.style.opacity = '1';
+            
+            const fallback = this.nextElementSibling;
+            if (fallback && fallback.classList.contains('recipe-emoji-fallback')) {
+                fallback.style.display = 'none';
+            }
+        };
+
+        // Hacer disponible la instancia de la app globalmente
+        window.app = this;
     }
     
     // Detectar formato de imagen
@@ -4071,33 +4156,143 @@ class RecipesApp {
     displayRecipes(recipes) {
         const grid = document.getElementById('recipesGrid');
         
+        if (!grid) {
+            console.error('❌ Grid element not found');
+            return;
+        }
+        
         if (recipes.length === 0) {
             grid.innerHTML = `
-                <div class="no-recipes" style="grid-column: 1 / -1;">
-                    <i class="fas fa-search"></i>
-                    <p>No se encontraron recetas</p>
+                <div class="no-recipes" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+                    <i class="fas fa-search" style="font-size: 48px; color: #6c757d; margin-bottom: 15px;"></i>
+                    <p style="color: #6c757d; font-size: 18px;">No se encontraron recetas</p>
                 </div>
             `;
             return;
         }
 
-        // Asegurar que todas las recetas tengan IDs válidos
-        const validRecipes = recipes.map(recipe => {
-            if (!recipe.id || isNaN(parseInt(recipe.id))) {
-                console.warn('⚠️ Recipe without valid ID found:', recipe.nombre, 'Assigning new ID');
-                recipe.id = Date.now() + Math.random(); // Asignar ID único
+        // Limpiar grid inmediatamente para mejor UX
+        grid.innerHTML = '<div class="loading-recipes">Cargando recetas...</div>';
+
+        // Optimización: usar DocumentFragment para mejor rendimiento
+        const fragment = document.createDocumentFragment();
+        
+        // Procesar recetas en lotes más pequeños para mejor responsividad
+        const batchSize = 8; // Reducido para mejor rendimiento
+        let currentBatch = 0;
+        
+        const processBatch = () => {
+            const start = currentBatch * batchSize;
+            const end = Math.min(start + batchSize, recipes.length);
+            
+            // Crear contenedor temporal para el lote
+            const tempContainer = document.createElement('div');
+            
+            for (let i = start; i < end; i++) {
+                const recipe = recipes[i];
+                
+                // Asegurar ID válido
+                if (!recipe.id || isNaN(parseInt(recipe.id))) {
+                    recipe.id = Date.now() + Math.random();
+                }
+                
+                // Crear elemento de receta
+                const recipeElement = document.createElement('div');
+                recipeElement.innerHTML = this.createRecipeCard(recipe);
+                fragment.appendChild(recipeElement.firstChild);
             }
-            return recipe;
+            
+            currentBatch++;
+            
+            if (end < recipes.length) {
+                // Procesar siguiente lote en el próximo frame para no bloquear UI
+                requestAnimationFrame(processBatch);
+            } else {
+                // Finalizar: insertar todo en el DOM de una vez
+                grid.innerHTML = '';
+                grid.appendChild(fragment);
+                
+                // Configurar event listeners después de insertar
+                this.setupRecipeEventListeners();
+                
+                // Inicializar lazy loading para las nuevas imágenes
+                this.initializeLazyLoading();
+                
+                console.log(`✅ ${recipes.length} recetas mostradas en ${currentBatch} lotes`);
+            }
+        };
+        
+        // Iniciar procesamiento
+        requestAnimationFrame(processBatch);
+    }
+
+    // Inicializar lazy loading para imágenes
+    initializeLazyLoading() {
+        if (!('IntersectionObserver' in window)) {
+            console.log('⚠️ IntersectionObserver no soportado');
+            return;
+        }
+
+        const imageObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    
+                    // Cargar imagen si tiene data-src
+                    if (img.dataset.src) {
+                        img.src = img.dataset.src;
+                        img.removeAttribute('data-src');
+                    }
+                    
+                    // Agregar animación de aparición
+                    img.style.opacity = '0';
+                    img.style.transition = 'opacity 0.3s ease';
+                    
+                    img.onload = () => {
+                        img.style.opacity = '1';
+                        img.classList.add('image-loaded');
+                    };
+                    
+                    imageObserver.unobserve(img);
+                }
+            });
+        }, {
+            rootMargin: '50px 0px',
+            threshold: 0.01
         });
 
-        grid.innerHTML = validRecipes.map(recipe => this.createRecipeCard(recipe)).join('');
+        // Observar todas las imágenes con loading="lazy"
+        const lazyImages = document.querySelectorAll('img[loading="lazy"]');
+        lazyImages.forEach(img => {
+            imageObserver.observe(img);
+        });
+    }
+
+    // Configurar event listeners de manera eficiente
+    setupRecipeEventListeners() {
+        const grid = document.getElementById('recipesGrid');
+        if (!grid) return;
         
-        // Verificación exhaustiva después de crear las tarjetas
-        setTimeout(() => {
-            this.verifyAllRecipeButtons();
-        }, 100);
-        
-        console.log('✅ Recipes displayed:', validRecipes.length);
+        // Usar delegación de eventos para mejor rendimiento
+        grid.addEventListener('click', (e) => {
+            const target = e.target.closest('button, .recipe-card');
+            if (!target) return;
+            
+            const recipeId = target.getAttribute('data-recipe-id') || 
+                           target.closest('.recipe-card')?.getAttribute('data-recipe-id');
+            
+            if (!recipeId) return;
+            
+            if (target.classList.contains('reviews-btn')) {
+                e.stopPropagation();
+                this.showRecipeReviews(parseInt(recipeId));
+            } else if (target.classList.contains('favorite-btn')) {
+                e.stopPropagation();
+                this.toggleFavorite(parseInt(recipeId));
+            } else if (target.classList.contains('recipe-card')) {
+                this.showRecipeDetail(parseInt(recipeId));
+            }
+        });
     }
 
     verifyAllRecipeButtons() {
@@ -4225,21 +4420,27 @@ class RecipesApp {
     }
 
     createRecipeCard(recipe) {
-        const rating = this.ratings[recipe.id] || 0;
-        // Normalizar comparación de favoritos
-        const isFavorite = this.favorites.map(id => parseInt(id)).includes(parseInt(recipe.id));
+        // Optimización: calcular valores una sola vez
+        const recipeId = recipe.id;
+        const rating = this.ratings[recipeId] || 0;
+        const isFavorite = this.favorites.includes(parseInt(recipeId));
         const hasReviews = recipe.resenas && recipe.resenas > 0;
         const stars = Math.round(recipe.calificacion || 0);
-        const starsHtml = hasReviews ? [1,2,3,4,5].map(i => `<i class="fas fa-star ${i <= stars ? 'active' : ''}"></i>`).join('') : `<span style="color:var(--gray);font-weight:600;">Sin calificaciones</span>`;
-        const ratingNumberHtml = hasReviews ? `<span class="rating-number">${recipe.calificacion.toFixed(1)}</span>` : '';
+        
+        // Generar HTML de estrellas de manera eficiente
+        const starsHtml = hasReviews ? 
+            Array.from({length: 5}, (_, i) => 
+                `<i class="fas fa-star ${i < stars ? 'active' : ''}"></i>`
+            ).join('') : 
+            `<span class="no-rating">Sin calificaciones</span>`;
+        
+        const ratingNumberHtml = hasReviews ? 
+            `<span class="rating-number">${recipe.calificacion.toFixed(1)}</span>` : '';
+        
         const reviewsHtml = hasReviews ? `${recipe.resenas} reseñas` : 'Sin reseñas';
 
-        // compute per-recipe attempt info for the current user (solo para detalle, no para tarjetas)
-        let attemptInfoHtml = '';
-        // Removido para no saturar las tarjetas - solo se mostrará en el detalle
-
-        // ========== USAR CDN PARA IMÁGENES ==========
-        const optimizedImageHtml = this.createOptimizedImage(
+        // Imagen optimizada
+        const imageHtml = this.createOptimizedImage(
             recipe.imagen, 
             recipe.nombre, 
             {
@@ -4251,10 +4452,15 @@ class RecipesApp {
             }
         );
 
+        // Categorías (máximo 2 para evitar overflow)
+        const categoriesHtml = recipe.categorias.slice(0, 2).map(cat => 
+            `<span class="category-badge">${this.getCategoryIcon(cat)} ${this.getCategoryName(cat)}</span>`
+        ).join('');
+
         return `
-            <div class="recipe-card" data-recipe-id="${recipe.id}">
+            <div class="recipe-card" data-recipe-id="${recipeId}">
                 <div class="recipe-image-container">
-                    ${optimizedImageHtml}
+                    ${imageHtml}
                     <div class="recipe-overlay">
                         <span class="recipe-badge">
                             <i class="fas fa-clock"></i> ${recipe.tiempo} min
@@ -4262,33 +4468,25 @@ class RecipesApp {
                     </div>
                 </div>
                 <div class="recipe-info">
-                    <div class="recipe-name">${recipe.nombre}</div>
-                    ${this.currentUser && this.hasActiveCompletion(this.currentUser.username, recipe.id) ? `<div style="margin-top:6px;"><span class="category-badge" style="background:var(--success);color:white;">Reto cumplido</span></div>` : ''}
+                    <h3 class="recipe-name">${recipe.nombre}</h3>
                     <div class="recipe-country">
                         <i class="fas fa-map-marker-alt"></i> ${recipe.pais}
                     </div>
                     <div class="recipe-rating">
-                        <div class="stars">
-                            ${starsHtml}
-                        </div>
+                        <div class="stars">${starsHtml}</div>
                         ${ratingNumberHtml}
                     </div>
-                    <div class="recipe-categories">
-                        ${recipe.categorias.slice(0, 3).map(cat => 
-                            `<span class="category-badge">${this.getCategoryIcon(cat)} ${this.getCategoryName(cat)}</span>`
-                        ).join('')}
-                    </div>
-                    ${attemptInfoHtml}
+                    <div class="recipe-categories">${categoriesHtml}</div>
                     
                     <div class="recipe-footer">
                         <span class="reviews">
                             <i class="fas fa-users"></i> ${reviewsHtml}
                         </span>
                         <div class="recipe-actions">
-                            <button class="reviews-btn" data-recipe-id="${recipe.id}" title="Ver reseñas">
+                            <button class="reviews-btn" data-recipe-id="${recipeId}" title="Ver reseñas" aria-label="Ver reseñas de ${recipe.nombre}">
                                 <i class="fas fa-comments"></i>
                             </button>
-                            <button class="favorite-btn ${isFavorite ? 'active' : ''}" data-recipe-id="${recipe.id}">
+                            <button class="favorite-btn ${isFavorite ? 'active' : ''}" data-recipe-id="${recipeId}" title="${isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}" aria-label="${isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}">
                                 <i class="fas fa-heart"></i>
                             </button>
                         </div>
